@@ -4,7 +4,7 @@
 // loading / empty / data / error UI states. Delete uses swipe-to-delete
 // + 4-second undo (mirrors ShoppingListScreen).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';

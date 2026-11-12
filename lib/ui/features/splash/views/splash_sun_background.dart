@@ -8,7 +8,7 @@
 // contrast with the white day count and rainbow-gradient date per PRD §
 // Accessibility.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SplashSunBackground extends StatelessWidget {
   const SplashSunBackground({super.key});

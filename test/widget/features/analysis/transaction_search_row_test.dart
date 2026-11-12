@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/analysis/search/views/transaction_search_row.dart';
 
@@ -38,7 +39,7 @@ const _acc = Account(
 );
 
 Widget _wrap(Widget child) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(body: SlidableAutoCloseBehavior(child: child)),
 );

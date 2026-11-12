@@ -4,7 +4,7 @@
 // (AppUpdateController); otherwise, and as the fallback on every failure,
 // it opens the APK URL in the system browser.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/color_palette.dart' show higherContrastInk;

@@ -23,7 +23,7 @@
 // hook makes every repository call on the same zone use the transactional
 // executor, which is the standard Drift pattern for cross-repo atomicity.
 
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:material_ui/material_ui.dart' show ThemeMode;
 
 import '../../core/utils/color_palette.dart';
 import '../../domain/models/account.dart';

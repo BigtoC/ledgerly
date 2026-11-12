@@ -3,7 +3,7 @@
 
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +16,7 @@ import 'package:ledgerly/domain/models/account_slice.dart';
 import 'package:ledgerly/domain/models/account_type.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
@@ -127,7 +128,7 @@ Future<void> _open(
         ),
         child: MaterialApp(
           theme: theme ?? lightTheme,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: Builder(

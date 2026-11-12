@@ -5,7 +5,7 @@
 // the gradient to guarantee WCAG AA contrast against the darkest regions
 // of the sun background (plan §7 + §12 risk 2).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SplashRainbowGradientText extends StatelessWidget {
   const SplashRainbowGradientText({

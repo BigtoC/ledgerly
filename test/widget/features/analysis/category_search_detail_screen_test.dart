@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +29,7 @@ import 'package:ledgerly/ui/features/analysis/search/view_models/category_search
 import 'package:ledgerly/ui/features/analysis/search/views/category_search_detail_screen.dart';
 import 'package:ledgerly/ui/features/analysis/search/views/category_search_tile.dart';
 import 'package:ledgerly/ui/features/analysis/search/views/transaction_search_row.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
@@ -148,7 +149,7 @@ void main() {
         ],
         child: MaterialApp.router(
           theme: lightTheme,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),
@@ -189,7 +190,7 @@ void main() {
           child: MaterialApp(
             theme: lightTheme,
             locale: const Locale('en'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const CategorySearchDetailScreen(
               categoryId: 1,
@@ -268,7 +269,7 @@ void main() {
           child: MaterialApp(
             theme: lightTheme,
             locale: const Locale('en'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const CategorySearchDetailScreen(
               categoryId: 1,
@@ -329,7 +330,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: lightTheme,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const CategorySearchDetailScreen(
             categoryId: 1,
@@ -386,7 +387,7 @@ void main() {
           child: MaterialApp(
             theme: lightTheme,
             locale: const Locale('en'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const CategorySearchDetailScreen(
               categoryId: 1,
@@ -463,7 +464,7 @@ void main() {
           ],
           child: MaterialApp.router(
             theme: lightTheme,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: router,
           ),
@@ -533,7 +534,7 @@ void main() {
           child: MaterialApp(
             theme: lightTheme,
             locale: const Locale('en'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const CategorySearchDetailScreen(
               categoryId: 1,
@@ -586,7 +587,7 @@ void main() {
           child: MaterialApp(
             theme: lightTheme,
             locale: const Locale('en'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const CategorySearchDetailScreen(
               categoryId: 1,
@@ -660,7 +661,7 @@ void main() {
           ],
           child: MaterialApp.router(
             theme: lightTheme,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: router,
           ),
@@ -737,7 +738,7 @@ void main() {
           ],
           child: MaterialApp.router(
             theme: lightTheme,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             routerConfig: router,
           ),
@@ -817,7 +818,7 @@ void main() {
           ],
           child: MaterialApp(
             theme: lightTheme,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             home: const CategorySearchDetailScreen(
               categoryId: 1,

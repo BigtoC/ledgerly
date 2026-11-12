@@ -9,7 +9,7 @@
 // MaterialApp on theme change lands in M4 (`app/app.dart`, `app/bootstrap.dart`).
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'analysis_colors.dart';
 import 'color_schemes.dart';

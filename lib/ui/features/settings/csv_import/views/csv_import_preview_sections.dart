@@ -5,7 +5,7 @@
 // Invalid rows show only the line number and a localized reason, never
 // field values, so the preview stays free of memos and amounts.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../../core/utils/date_helpers.dart';
 import '../../../../../domain/models/category.dart';

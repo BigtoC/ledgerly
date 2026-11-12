@@ -19,7 +19,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +40,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
 import 'package:ledgerly/ui/features/accounts/views/manage_accounts_body.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -161,7 +162,7 @@ Widget _wrap({
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: textScaleBuilder(textScale),
       routerConfig: _StubRouter.build(data, live: live),

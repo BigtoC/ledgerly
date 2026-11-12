@@ -2,7 +2,7 @@
 
 > Authoritative source: [`PRD.md` → *Dependencies*](../../PRD.md#dependencies) and the live `pubspec.yaml`.
 
-Tested versions live in `pubspec.yaml`. This page covers the layer-boundary check that replaced `import_lint`, the base `app_zh.arb` requirement, and the Android build toolchain.
+Tested versions live in `pubspec.yaml`. This page covers the layer-boundary check that replaced `import_lint`, the base `app_zh.arb` requirement, the `material_ui` / `cupertino_ui` packages, and the Android build toolchain.
 
 ## Layer-boundary check
 
@@ -24,13 +24,21 @@ Tested versions live in `pubspec.yaml`. This page covers the layer-boundary chec
 
 ### Why not `import_lint`
 
-`import_lint` was dropped. The 0.1.6 pin, the only line that resolved, enforced nothing: it matched the `^lib/...` rules against the absolute paths from `Directory.current.list()`, so no rule ever applied, and it always called `exit(0)`. The 2.x line (newest: 2.0.0) pins `analyzer ^12.1.0`, but `freezed 4.0.3` requires `>=14`, and `riverpod_generator 4.0.9` and `drift_dev 2.35` require `>=13`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. The rule key names in `import_analysis_options.yaml` are inherited from 0.1.6.
+`import_lint` was dropped. The 0.1.6 pin, the only line that resolved, enforced nothing: it matched the `^lib/...` rules against the absolute paths from `Directory.current.list()`, so no rule ever applied, and it always called `exit(0)`. The 2.x line (newest: 2.0.0) pins `analyzer ^12.1.0`, but `freezed 4.0.3` requires `>=14`, and `riverpod_generator 4.0.10` and `drift_dev 2.35` require `>=13`. The 0.9.x–1.0.x band needs `analyzer ^5.2.0`, which conflicts with `freezed >=2.5.3`. The rule key names in `import_analysis_options.yaml` are inherited from 0.1.6.
 
 ## Chinese ARBs require a base `app_zh.arb`
 
 `flutter_localizations` fails codegen with `Arb file for a fallback, zh, does not exist` when only `app_zh_CN.arb` / `app_zh_TW.arb` are present.
 
 **Keep `app_zh.arb` in `l10n/`** even if it only contains `appTitle` — removing it breaks `flutter pub get`. Bare `zh` resolves to English at runtime; the fallback exists only so codegen succeeds.
+
+## Material and Cupertino packages
+
+Flutter 3.50 deprecates `package:flutter/material.dart` and `package:flutter/cupertino.dart`. Ledgerly imports `package:material_ui/material_ui.dart` and `package:cupertino_ui/cupertino_ui.dart` instead, and both are direct dependencies. `material_ui` re-exports `package:flutter/widgets.dart`.
+
+- **Two copies, separate types.** The framework still ships its frozen Material copy behind the deprecated library. `material_ui` defines its own `MaterialApp`, `Theme`, `Scaffold`, `ScaffoldMessenger` and `MaterialLocalizations`, and lookups are keyed by type, so a widget built on one copy does not see the other copy's ancestors. A dependency whose widgets read the theme or Material localizations must be on the same copy as the app. Check this when adding one. `go_router` 18 already detects `material_ui`'s `MaterialApp`. `fl_chart` still imports the framework copy but uses only types and constants on Ledgerly's paths.
+- **Localizations.** gen-l10n in Flutter 3.50 still emits the deprecated `flutter_localizations` delegates in `AppLocalizations.localizationsDelegates` ([flutter/flutter#191072](https://github.com/flutter/flutter/issues/191072)). `material_ui` widgets cannot read them, so a `zh_TW` or `zh_CN` app would fail with no `MaterialLocalizations`. Every `MaterialApp`, in `lib/` and in tests, takes `appLocalizationsDelegates` from `lib/core/l10n/app_localizations_delegates.dart`, which is `AppLocalizations.delegate` plus `material_ui`'s `GlobalMaterialLocalizations.delegates`. `lib/l10n/**` is excluded from analysis so the generated file's deprecated references do not fail `--fatal-infos`. Drop both once gen-l10n emits `material_ui` delegates.
+- **`dart fix`.** Migrate stray imports with `dart fix --apply --code=migrate_design_widgets`. A plain `dart fix --apply` is safe only while `lib/l10n/**` stays excluded; without the exclude it rewrites the generated file into five analyzer errors.
 
 ## Android build toolchain
 
@@ -47,7 +55,7 @@ A bump has to pass all three checks. The one exception is patch releases on the 
 
 1. **Kotlin's KGP table** ([kotlinlang.org → Configure a Gradle project](https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin)). KGP 2.4.20–2.4.21 covers Gradle 7.6.3–9.7.0 and AGP 8.5.2–9.3.1. KGP 2.4.0–2.4.10 stops at Gradle 9.5.0 and AGP 9.1.0.
 2. **AGP's minimum Gradle** ([AGP release notes](https://developer.android.com/build/releases/about-agp)). AGP 9.3 needs Gradle 9.5.0, AGP 9.4 needs 9.6.0.
-3. **Flutter 3.47.7.** The Gradle plugin's `DependencyVersionChecker` warns below Gradle 9.1.0, AGP 9.0.1 and KGP 2.3.20. `flutter analyze --suggestions` must show `[✓] Java/Gradle/KGP/Android Gradle Plugin`. Its tables (`packages/flutter_tools/lib/src/android/gradle_utils.dart`) stop at AGP 9.2 and KGP 2.4.0 and accept newer versions as unknown. So this check passes for any KGP above 2.4.0, and the Kotlin table is the real limit.
+3. **Flutter 3.50.0.** The Gradle plugin's `DependencyVersionChecker` fails the build below Gradle 9.3.1 or AGP 9.1.1 and on AGP 10 or later, and warns below Gradle 9.5.0 and AGP 9.3.1. It skips its KGP check (error below 2.4.10, warning below 2.4.20) under Built-in Kotlin, so the Kotlin table is the real KGP limit. `flutter analyze --suggestions` can no longer be required to show `[✓] Java/Gradle/KGP/Android Gradle Plugin`. Its tables (`packages/flutter_tools/lib/src/android/gradle_utils.dart`) stop at AGP 9.4, KGP 2.4.20 and Gradle 9.5.0, and accept AGP 9.3.x only with Gradle 9.5.0 and nothing newer. For this set it shows `[✗]` with `Update Gradle to at least "9.5.0"`, a false positive, and still exits 0. It treats AGP 9.4 and later as unknown and accepts them with any Gradle from 9.5.0.
 
 AGP 9.4.x with Gradle 9.8.x builds and passes Flutter's check, but it is outside the Kotlin table. Move to it when a KGP release lists it.
 
@@ -63,13 +71,13 @@ Compared with 9.3.1 / 9.7.0 under JDK 21, the patches add no new warnings to `as
 
 ### Built-in Kotlin and the KGP line
 
-`android.builtInKotlin=true` lets AGP 9 compile Kotlin itself, so `app/build.gradle.kts` does not apply `kotlin-android`. AGP 9 rejects that plugin when Built-in Kotlin is on. Built-in Kotlin uses whichever kotlin-gradle-plugin is on the build classpath. AGP brings 2.2.10 and the Flutter Gradle Plugin 2.0.0, so the `id("org.jetbrains.kotlin.android") version "…" apply false` line in `settings.gradle.kts` is what sets the compiler version. `cd android && ./gradlew kgpVersion -q` prints it. Compiler options go in the top-level `kotlin { compilerOptions { … } }` block, because `android.kotlinOptions` does not exist under Built-in Kotlin. The Flutter 3.47.7 template and migrator write `android.builtInKotlin=false`. This project sets `true` on purpose.
+`android.builtInKotlin=true` lets AGP 9 compile Kotlin itself, so `app/build.gradle.kts` does not apply `kotlin-android`. AGP 9 rejects that plugin when Built-in Kotlin is on. Built-in Kotlin uses whichever kotlin-gradle-plugin is on the build classpath. AGP brings 2.2.10 and the Flutter Gradle Plugin 2.4.10, so the `id("org.jetbrains.kotlin.android") version "…" apply false` line in `settings.gradle.kts` is what sets the compiler version. `cd android && ./gradlew -q :app:dependencies --configuration kotlinCompilerClasspath` lists the compiler artifacts at that version. Flutter's `./gradlew kgpVersion -q` prints `KGP Version: null`, because it reads the `kotlin-android` plugin, which Built-in Kotlin does not apply. Compiler options go in the top-level `kotlin { compilerOptions { … } }` block, because `android.kotlinOptions` does not exist under Built-in Kotlin. The Flutter 3.50.0 template and migrator write `android.builtInKotlin=false`. This project sets `true` on purpose.
 
 ### `android.newDsl=false`
 
-AGP 9 defaults to the new DSL. The Flutter 3.47.7 Gradle plugin still casts the `android` extension to the legacy `AbstractAppExtension` and reads `applicationVariants`. With `newDsl=true` it fails to apply (`ApplicationExtensionImpl … cannot be cast to … AbstractAppExtension`). Tracked in [flutter/flutter#166550](https://github.com/flutter/flutter/issues/166550). AGP prints a deprecation warning for the flag and removes it in AGP 10. Flip it to `true` (or drop it) once a Flutter release migrates its plugin to the new variant API. Check that `cd android && ./gradlew help -Pandroid.newDsl=true` configures cleanly first.
+AGP 9 defaults to the new DSL. The Flutter 3.50.0 Gradle plugin no longer uses the legacy variant API ([flutter/flutter#166550](https://github.com/flutter/flutter/issues/166550)). The blocker is now `android_file_picker`, which `file_picker` pulls in: up to 2.1.5 (locked) its `build.gradle.kts` calls `configure<LibraryExtension>`, so `cd android && ./gradlew help -Pandroid.newDsl=true` fails with `Extension of type 'LibraryExtension' does not exist`. AGP prints a deprecation warning for the flag and removes it in AGP 10. Flip it to `true` once that command configures cleanly. Do not delete the line: Flutter's `DisableNewDslMigration` adds `android.newDsl=false` back to a `gradle.properties` that lacks it.
 
-Gradle 10 is blocked on Flutter for a similar reason. Under `--warning-mode all`, the Flutter Gradle Plugin triggers two Gradle 10 deprecations: "Using a Project object as a dependency notation" (reported at the `project.evaluationDependsOn(":app")` line in `android/build.gradle.kts`) and "Invocation of Task.project at execution time" in `compileFlutterBuild*`. Neither comes from this project's build scripts. Both stay warnings until Gradle 10.
+Gradle 10 is blocked on Flutter's Gradle plugin. Under `--warning-mode all`, the Flutter Gradle Plugin triggers two Gradle 10 deprecations: "Using a Project object as a dependency notation" (reported at the `project.evaluationDependsOn(":app")` line in `android/build.gradle.kts`) and "Invocation of Task.project at execution time" in `compileFlutterBuild*`. Neither comes from this project's build scripts. Both stay warnings until Gradle 10.
 
 ### R8 defaults under AGP 9
 
@@ -85,11 +93,11 @@ After a toolchain bump, compare `build/app/outputs/mapping/release/seeds.txt` an
 | Item                  | Value                       | Set in                                                        |
 |-----------------------|-----------------------------|---------------------------------------------------------------|
 | Deployment target     | iOS `15.0`                  | `IPHONEOS_DEPLOYMENT_TARGET` in `ios/Runner.xcodeproj/project.pbxproj` |
-| Xcode                 | 15+ (Flutter recommends 16) | Flutter 3.47.7 `xcodeRequiredVersion`                         |
+| Xcode                 | 15+ (Flutter recommends 16) | Flutter 3.50.0 `xcodeRequiredVersion`                         |
 | Plugin dependencies   | Swift Package Manager       | `FlutterGeneratedPluginSwiftPackage`, generated under `ios/Flutter/ephemeral/` |
 | CocoaPods             | Not used                    | No `ios/Podfile`                                              |
 
-Flutter 3.47.7's iOS migrators raised the deployment target from 13.0 to 15.0 and added the Swift Package Manager integration: a local package reference and product dependency in `project.pbxproj`, and the "Run Prepare Flutter Framework Script" pre-action in `Runner.xcscheme`. Swift Package Manager is on by default on the stable channel, so nothing in `pubspec.yaml` or `flutter config` turns it on. **Users on iOS 13 and 14 cannot install releases built from this project any more.**
+Flutter 3.50.0's iOS migrators raise the deployment target from 13.0 to 15.0 and add the Swift Package Manager integration: a local package reference and product dependency in `project.pbxproj`, and the "Run Prepare Flutter Framework Script" pre-action in `Runner.xcscheme`. Swift Package Manager is on by default on the stable channel, so nothing in `pubspec.yaml` or `flutter config` turns it on. **Users on iOS 13 and 14 cannot install releases built from this project any more.**
 
 Every iOS plugin in the graph ships a `Package.swift`: `package_info_plus`, `url_launcher_ios` and `webview_flutter_wkwebview`. `path_provider_foundation` 2.6 has no native plugin code. It calls Foundation through `objective_c` FFI. `sqlite3` and `objective_c` ship their libraries as build-hook code assets, which Flutter embeds as frameworks with or without a package manager. With all plugins on Swift Package Manager, Flutter prints "your project still has CocoaPods integration" and asks you to delete the Podfile and the `Pods-Runner.*.xcconfig` includes in `ios/Flutter/{Debug,Release}.xcconfig`. Both are gone. `pod deintegrate` had nothing to remove, because `pod install` output was never committed. When Swift Package Manager is in use and there is no Podfile, the tool skips CocoaPods (`processPodsIfNeeded` in `flutter_tools/lib/src/macos/cocoapod_utils.dart`).
 

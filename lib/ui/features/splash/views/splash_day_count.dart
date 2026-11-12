@@ -5,7 +5,7 @@
 // at 2× system scale, this widget caps at 1.5× so the numeral keeps its
 // relative size while the surrounding flexible text scales normally.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../l10n/app_localizations.dart';
 

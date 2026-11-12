@@ -2,7 +2,7 @@
 // header. The host only builds it when there is at least one visible
 // pending item.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class PendingBadge extends StatelessWidget {
   const PendingBadge({super.key, required this.count});

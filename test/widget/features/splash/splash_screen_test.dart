@@ -4,7 +4,7 @@
 // overrides for the controller state. Route-level redirect coverage stays
 // in `test/unit/app/router_test.dart`.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +23,7 @@ import 'package:ledgerly/ui/features/splash/view_models/splash_state.dart';
 import 'package:ledgerly/ui/features/splash/views/splash_day_count.dart';
 import 'package:ledgerly/ui/features/splash/views/splash_enter_button.dart';
 import 'package:ledgerly/ui/features/splash/views/splash_rainbow_gradient_text.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -55,7 +56,7 @@ void main() {
     return UncontrolledProviderScope(
       container: container,
       child: const MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: SplashScreen(),
       ),
@@ -85,7 +86,7 @@ void main() {
     return UncontrolledProviderScope(
       container: container,
       child: MaterialApp.router(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
       ),
@@ -325,7 +326,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: textScaleBuilder(2.0),
           home: const SplashScreen(),

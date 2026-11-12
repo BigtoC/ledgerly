@@ -13,7 +13,7 @@
 // of the last known minor-unit value. This keeps the stored integer
 // stable across JPY↔USD toggles inside the form.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../domain/models/currency.dart';

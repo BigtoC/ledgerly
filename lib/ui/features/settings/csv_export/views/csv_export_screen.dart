@@ -4,7 +4,7 @@
 // (every transaction by default), opens the range picker and forwards the
 // export tap. The save dialog itself is the system's.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 

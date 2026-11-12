@@ -4,7 +4,7 @@
 // chip opens a sheet listing all of them. Renders nothing while loading,
 // on error, or when the category has no memos.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';

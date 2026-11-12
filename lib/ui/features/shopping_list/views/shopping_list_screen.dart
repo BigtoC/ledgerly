@@ -19,7 +19,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
@@ -262,17 +262,21 @@ class _DataBody extends StatelessWidget {
               borderRadius: BorderRadius.circular(homePageCardBorderRadius),
               boxShadow: [buildBoxShadow(homePageCardBorderRadius)],
             ),
-            sliver: SliverList.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return _ShoppingListRow(
-                  item: item,
-                  canTap: data.pendingDeleteId == null,
-                  onDelete: () => onDeleteItem(item.id),
-                  onTap: () => onTapItem(item.id),
-                );
-              },
+            sliver: SliverClipRRect(
+              borderRadius: BorderRadius.circular(homePageCardBorderRadius),
+              clipOverlap: ClipOverlapBehavior.none,
+              sliver: SliverList.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return _ShoppingListRow(
+                    item: item,
+                    canTap: data.pendingDeleteId == null,
+                    onDelete: () => onDeleteItem(item.id),
+                    onTap: () => onTapItem(item.id),
+                  );
+                },
+              ),
             ),
           ),
         ),

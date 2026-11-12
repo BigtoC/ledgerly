@@ -5,7 +5,7 @@
 // Splash visuals (sun background, rainbow gradient) are intentionally
 // independent of this scheme; see PRD 899 and the Splash M5 slice.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// MD3 Baseline — Green 40 (`#006C35`). Reused from the category palette
 /// (Stream B / PRD 464) so the shell seed coincides with a palette-registered

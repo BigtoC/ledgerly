@@ -190,7 +190,7 @@ void main() {
         sub.close();
         await Future<void>.delayed(Duration.zero);
 
-        expect(container.exists(provider), isFalse);
+        expect(container.read(provider.exists), isFalse);
         expect(txCtrl.hasListener, isFalse);
       },
     );
@@ -459,7 +459,7 @@ void main() {
           // Screen popped mid-window: the undo window keeps it alive.
           sub.close();
           async.elapse(Duration.zero);
-          expect(container.exists(provider), isTrue);
+          expect(container.read(provider.exists), isTrue);
           verifyNever(() => repo.delete(any()));
 
           async.elapse(kUndoWindow + const Duration(milliseconds: 1));
@@ -467,7 +467,7 @@ void main() {
           verify(() => repo.delete(7)).called(1);
 
           async.elapse(Duration.zero);
-          expect(container.exists(provider), isFalse);
+          expect(container.read(provider.exists), isFalse);
         });
       },
     );
@@ -501,7 +501,7 @@ void main() {
           async.elapse(kUndoWindow + const Duration(milliseconds: 1));
           async.flushMicrotasks();
           async.elapse(Duration.zero);
-          expect(container.exists(provider), isFalse);
+          expect(container.read(provider.exists), isFalse);
 
           Object? undoError;
           var undone = false;

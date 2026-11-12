@@ -15,7 +15,7 @@
 
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +27,7 @@ import 'package:ledgerly/domain/models/app_update.dart';
 import 'package:ledgerly/ui/features/settings/view_models/app_update_controller.dart';
 import 'package:ledgerly/ui/features/settings/view_models/app_update_state.dart';
 import 'package:ledgerly/ui/features/settings/views/new_version_badge.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 final _inApp = AppUpdate(
@@ -67,7 +68,7 @@ Widget _wrap(Widget child, {ThemeData? theme, _FakeController? controller}) {
     container: container,
     child: MaterialApp(
       theme: theme,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: Center(child: child)),
     ),

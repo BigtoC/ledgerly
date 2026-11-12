@@ -4,7 +4,7 @@
 // The palette is append-only; stored as int index so we resolve the
 // preview swatch via `colorForIndex` at render time.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/utils/color_palette.dart';
 

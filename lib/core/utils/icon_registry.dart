@@ -1,5 +1,5 @@
 // lib/core/utils/icon_registry.dart
-import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:material_ui/material_ui.dart' show IconData, Icons;
 
 import 'color_palette.dart';
 

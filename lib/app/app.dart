@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 
+import '../core/l10n/app_localizations_delegates.dart';
 import '../l10n/app_localizations.dart';
 import '../ui/core/theme/app_theme.dart';
 import 'providers/app_update_provider.dart';
@@ -57,7 +58,7 @@ class _AppState extends ConsumerState<App> {
       darkTheme: darkTheme,
       themeMode: themeMode,
       locale: preferredLocale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: (device, supported) => resolveChineseLocale(
         preferredLocale,

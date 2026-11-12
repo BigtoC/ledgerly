@@ -1,6 +1,9 @@
 # `lib/core/l10n/`
 
-Reserved for l10n *utilities* that wrap `flutter_localizations`. Source ARB
-files live in `/l10n/` at the repo root; generated Dart classes land in the
-synthetic `flutter_gen` package and are imported via
-`package:flutter_gen/gen_l10n/app_localizations.dart`.
+l10n *utilities*. Source ARB files live in `/l10n/` at the repo root;
+gen-l10n writes the Dart classes to `lib/l10n/`, imported as
+`package:ledgerly/l10n/app_localizations.dart`.
+
+- `app_localizations_delegates.dart` — `appLocalizationsDelegates`, the
+  `localizationsDelegates` for every `MaterialApp` (see
+  `docs/architecture/dependencies.md` → *Material and Cupertino packages*).

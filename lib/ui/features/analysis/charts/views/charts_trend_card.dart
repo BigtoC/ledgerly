@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../../core/utils/color_palette.dart';
 import '../../../../../core/utils/money_formatter.dart';

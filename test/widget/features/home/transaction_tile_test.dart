@@ -4,7 +4,7 @@
 // expenses; the `+`/`-` sign alone distinguishes them. The title is the
 // memo, falling back to the category name, with no subtitle.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,6 +12,7 @@ import 'package:ledgerly/app/providers/exchange_rates_provider.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/home/view_models/home_providers.dart';
 import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
@@ -42,7 +43,7 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TransactionTile(

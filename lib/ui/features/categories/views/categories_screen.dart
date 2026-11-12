@@ -17,7 +17,7 @@
 // current one first: an Undo snackbar has an action, so it stays until
 // dismissed, and anything shown after it would wait behind it.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';

@@ -3,7 +3,7 @@
 // sheetItems in renderVals()). A bottom sheet below 600 dp, a Dialog at
 // 600 dp and wider (plan D10).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 

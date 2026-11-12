@@ -143,6 +143,7 @@ lib/
   core/
     constants.dart
     l10n/
+      app_localizations_delegates.dart  # MaterialApp localizationsDelegates (material_ui)
     utils/
       money_formatter.dart
       icon_registry.dart
@@ -794,7 +795,7 @@ Seeded categories use stable `l10n_key` values so locale changes do not create d
 | Cash         | `accountType.cash`       | `'wallet'`      | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
 | Investment   | `accountType.investment` | `'trending_up'` | Neutral Variant 70 — `#AEA9B4` | `user_preferences.default_currency` at seed time |
 
-Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Icons.wallet` and `Icons.trending_up` from Flutter's built-in `material` library.
+Account type tiles deliberately use a shared neutral tint — account types are visually distinguished by their **icon**, not by color. Users creating custom account types can pick any other palette color if they want color-coded account types. Icon keys (`'wallet'`, `'trending_up'`) resolve via `core/utils/icon_registry.dart` at render time to `Icons.wallet` and `Icons.trending_up` from `package:material_ui`.
 
 Seeded account types follow the same identity rules as seeded categories: `l10n_key` stays stable across renames; user renames write `custom_name` only. Users can add custom account types from Settings > Manage Accounts (name + icon + color + default currency). Archiving / deletion rules match categories: archive when referenced, hard-delete only when unused.
 
@@ -1175,7 +1176,7 @@ All scrollable regions must survive a 2× text scale (`MediaQuery.textScalerOf`)
 
 Categories store `icon` as a string key and `color` as a palette index. The actual `IconData` and `Color` values are resolved at render time from compile-time registries in `core/utils/`:
 
-- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from Flutter's built-in `material` library. Unknown keys fall back to `Icons.category`. `kIconGroups` places every key in exactly one `IconGroup` (Food, Drinks, Transport, Shopping, Entertainment, Home, Electronics, Medical, Income, Other); the category icon picker shows one titled section per group, in that order.
+- `core/utils/icon_registry.dart` — `Map<String, IconData>` mapping string keys to `Icons.*` from `package:material_ui`. Unknown keys fall back to `Icons.category`. `kIconGroups` places every key in exactly one `IconGroup` (Food, Drinks, Transport, Shopping, Entertainment, Home, Electronics, Medical, Income, Other); the category icon picker shows one titled section per group, in that order.
 - `core/utils/color_palette.dart` — ordered `List<Color>` of MD3-compatible category colors. `categories.color` is the index into this list. Palette additions append; existing indices never change.
 
 This avoids storing raw `IconData` symbols or ARGB ints in the DB (both fragile across Flutter / Material updates) while keeping categories portable across future backup/restore.
@@ -1207,6 +1208,7 @@ No `try/catch` in widgets. No unhandled `Future` anywhere: a widget either await
 - `Semantics` labels on icon-only buttons (FAB, delete, undo snackbar action)
 - Dynamic text scaling respected up to 2×; splash day counter uses `AutoSizeText` or clamps at 1.5× to preserve layout
 - `MediaQuery.boldText` respected in list rendering
+- With the platform's Reduce Motion setting on (`MediaQuery.reduceMotionOf`, iOS), the Home day switch and the Analysis period switch do not slide: the new body appears in place. Route transitions are unchanged.
 - Screen reader order verified on Home and Add Transaction screens
 
 ---
@@ -1358,23 +1360,25 @@ Tests are organized by **architectural layer**, not by feature. This mirrors the
 
 ## Dependencies
 
-Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13.7). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
+Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14.0). Keep `pubspec.yaml` in sync with this table — any version bump needs to round-trip `flutter pub get` and `dart run build_runner build` before landing here.
 
 ### Core (MVP)
 
 | Package                  | Version     | Purpose                                                                  |
 |--------------------------|-------------|--------------------------------------------------------------------------|
-| `flutter_riverpod`       | `^3.4.3`    | State management                                                         |
-| `riverpod_annotation`    | `^4.0.7`    | Provider code-gen annotations                                            |
+| `flutter_riverpod`       | `^3.5.0`    | State management                                                         |
+| `riverpod_annotation`    | `^4.0.8`    | Provider code-gen annotations                                            |
 | `drift`                  | `^2.35.3`   | Database ORM                                                             |
 | `drift_flutter`          | `^0.3.1`    | Flutter SQLite integration                                               |
 | `path_provider`          | `^2.1.6`    | DB file path location; update APK download directory                     |
-| `go_router`              | `^18.1.2`   | Navigation/routing (`StatefulShellRoute`)                                |
+| `go_router`              | `^18.1.4`   | Navigation/routing (`StatefulShellRoute`)                                |
 | `freezed_annotation`     | `^3.1.0`    | Immutable data model annotations                                         |
 | `json_annotation`        | `^4.12.0`   | JSON serialization annotations                                           |
-| `flutter_localizations`  | sdk         | i18n framework                                                           |
+| `material_ui`            | `^1.11.0`   | Material widgets (replaces the deprecated `package:flutter/material.dart`) |
+| `cupertino_ui`           | `^1.1.6`    | Cupertino widgets (`CupertinoPage` for modal routes in `router.dart`)    |
+| `flutter_localizations`  | sdk         | i18n framework (gen-l10n output; `material_ui`'s delegates build on it)  |
 | `intl`                   | `^0.20.2`   | Localization utilities + `NumberFormat`                                  |
-| `flutter_slidable`       | `^4.0.3`    | Swipe actions on list items                                              |
+| `flutter_slidable`       | `^5.2.0`    | Swipe actions on list items                                              |
 | `package_info_plus`      | `^10.2.2`   | App version info (About screen, app-update check)                        |
 | `webview_flutter`        | `^4.14.1`   | In-app browser (About screen links)                                      |
 | `url_launcher`           | `^6.3.3`    | System browser launcher                                                  |
@@ -1388,7 +1392,7 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 | `fl_chart`      | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
 | `crypto`        | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
 | `file_selector` | `^1.1.0`  | System file picker (Fortune City CSV import)                                    |
-| `file_picker`   | `^13.1.0` | System save dialog (CSV export); Swift Package Manager on iOS, no CocoaPods     |
+| `file_picker`   | `^13.3.3` | System save dialog (CSV export); Swift Package Manager on iOS, no CocoaPods     |
 | `csv`           | `^8.0.0`  | RFC 4180 decoding and encoding (CSV import and export)                          |
 
 ### Deferred (Not yet shipped)
@@ -1403,12 +1407,12 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 
 | Package                 | Version   | Purpose                                                                                                                                                               |
 |-------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `build_runner`          | `^2.16.2` | Code generation runner — held below 2.17 by `build 5`; see note                                                                                                       |
+| `build_runner`          | `^2.17.1` | Code generation runner                                                                                                                                                |
 | `drift_dev`             | `^2.35.2` | Drift code generation + schema dump                                                                                                                                   |
 | `freezed`               | `^4.0.3`  | Freezed code generation                                                                                                                                               |
 | `json_serializable`     | `^6.15.2` | JSON code generation — not used yet; see note                                                                                                                         |
-| `riverpod_generator`    | `^4.0.9`  | Riverpod code generation                                                                                                                                              |
-| `riverpod_lint`         | `3.1.9`   | Riverpod-specific lints — analysis-server plugin under `plugins:` in `analysis_options.yaml`, not a pubspec entry; see note                                           |
+| `riverpod_generator`    | `^4.0.10` | Riverpod code generation                                                                                                                                              |
+| `riverpod_lint`         | `3.2.0`   | Riverpod-specific lints — analysis-server plugin under `plugins:` in `analysis_options.yaml`, not a pubspec entry; see note                                           |
 | `mocktail`              | `^1.0.5`  | Mocking for tests                                                                                                                                                     |
 | `fake_async`            | `^1.3.3`  | Async time control for tests                                                                                                                                          |
 | `yaml`                  | `^3.1.4`  | Reads `import_analysis_options.yaml` in the layer-boundary test; see note                                                                                             |
@@ -1417,11 +1421,9 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 
 **Layer-boundary check note.** `import_lint` is not a dependency. `0.1.6`, the only release that resolved, enforced nothing: it matched the `^lib/...` rules against absolute paths and always exited 0. `2.x` pins `analyzer ^12.1.0`, which conflicts with `freezed 4.0.3` (`>=14.0.0`). `test/unit/architecture/layer_boundaries_test.dart` enforces the rules in `import_analysis_options.yaml` instead, using `yaml` to read them, and CI runs it as its own step. Violations that predate the check sit in that file's `baseline:`; new ones, and baseline entries that no longer occur, fail the test.
 
-**`riverpod_lint` version note.** `riverpod_lint 3.1+` is an `analysis_server_plugin`. The analysis server resolves it from `analysis_options.yaml`, not from `pubspec.yaml`. On Dart 3.13, `3.1.9` loads against analyzer 14 (on Dart 3.12 only `3.1.4` did; see the comment above `plugins:` in `analysis_options.yaml`). Its diagnostics appear in `dart analyze` and the IDE. CI runs `dart analyze --fatal-infos`, which waits for the plugin, so `riverpod_lint` warnings fail the build. `flutter analyze` does not wait for the plugin and reports its warnings only some of the time.
+**`riverpod_lint` version note.** `riverpod_lint 3.1+` is an `analysis_server_plugin`. The analysis server resolves it from `analysis_options.yaml`, not from `pubspec.yaml`. On Dart 3.14 the server asks for `analysis_server_plugin ^0.3.21-dev`, and `3.2.0` (released with Riverpod 3.5.0) loads against `analysis_server_plugin 0.3.26` and analyzer 14; `3.1.9` loads too (on Dart 3.12 only `3.1.4` did; see the comment above `plugins:` in `analysis_options.yaml`). Its diagnostics appear in `dart analyze` and the IDE. CI runs `dart analyze --fatal-infos`, which waits for the plugin, so `riverpod_lint` warnings fail the build. A version that fails to resolve is skipped silently: `dart analyze` prints no plugin error and simply reports no `riverpod_lint` diagnostics, so a plugin-error check alone does not catch it. CI therefore also runs `tool/check_riverpod_lint.sh`, which adds a temporary violation (a public field on a `Notifier`, which `avoid_public_notifier_properties` reports) and fails unless `dart analyze` reports it. Run it after changing the version. `flutter analyze` does not wait for the plugin and reports its warnings only some of the time.
 
 **`json_serializable` note.** Nothing uses it yet. There are no `@JsonSerializable` classes and no `build.yaml`, and the `@JsonKey` annotations in `*.freezed.dart` come from `freezed_annotation`. It stays for future JSON boundaries such as backup/restore. Its `analyzer >=10.0.0 <15.0.0` range is wider than `freezed 4.0.3`'s `>=14.0.0`, so it does not limit analyzer upgrades today. If it becomes the binding constraint before anything uses it, drop it instead of holding the stack back.
-
-**`build_runner` version note.** `build_runner 2.17.1` requires `build >=5.0.0 <5.1.0`, and 2.17.0 is retracted. `drift_dev 2.35` and `riverpod_generator 4.0.9` still require `build <5.0.0`, so `^2.16.2` is the newest release that resolves.
 
 **SQLite native library note.** `drift_flutter 0.3` uses `sqlite3 3.x`. That release bundles SQLite through Dart build hooks: at build time it downloads a hash-checked prebuilt library from the `sqlite3.dart` GitHub release. It replaces `sqlite3_flutter_libs`, which now resolves only as an empty `+eol` package. The database file is unchanged at `getApplicationDocumentsDirectory()/ledgerly.sqlite`. The exact `sqlite3` release, and therefore the SQLite version that ships, is pinned by the committed `pubspec.lock`; CI resolves with `flutter pub get --enforce-lockfile`.
 
@@ -1435,15 +1437,15 @@ Versions below are the tested resolvable set under Flutter **3.47.9** (Dart 3.13
 | JDK                           | 17+      | CI uses Temurin 21 (`check.yml`, `android-release.yml`) |
 | Java / Kotlin bytecode target | 17       | `android/app/build.gradle.kts`                          |
 
-**Android toolchain pin note.** The Kotlin table (kotlinlang.org, "Configure a Gradle project") lists KGP 2.4.20–2.4.21 for Gradle 7.6.3–9.7.0 and AGP 8.5.2–9.3.1. Gradle 9.7.1 and AGP 9.3.3 are patch releases above those maxima (one Gradle patch, two AGP patches), and that is a deliberate choice. JetBrains does not list them as fully supported, and its page warns that newer versions may bring deprecation warnings or features that do not work. The patches stay on the same minor lines and fix release-build bugs: AGP 9.3.3 makes R8 output deterministic and fixes dex files that intermittently fail verification and crash the app on launch, and Gradle 9.7.1 fixes 9.7.0 regressions. Compared with 9.3.1 / 9.7.0, they add no new build warnings, and the release APKs keep the same manifests, `.so` and dex sizes, and R8 mapping. The AGP release notes require at least Gradle 9.5.0 for AGP 9.3. Flutter 3.47.7 warns below Gradle 9.1.0, AGP 9.0.1 and Kotlin 2.3.20, and `flutter analyze --suggestions` reports this set as compatible. AGP 9.4 and Gradle 9.8 also build, but they are above the Kotlin table's limits, so wait for a KGP release that lists them. `android.builtInKotlin=true` means AGP compiles Kotlin with the KGP on the build classpath, which is why the `apply false` line in `settings.gradle.kts` sets the compiler version. `android.newDsl=false` stays until the Flutter Gradle Plugin stops using the legacy variant API ([flutter/flutter#166550](https://github.com/flutter/flutter/issues/166550)). See [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#android-build-toolchain).
+**Android toolchain pin note.** The Kotlin table (kotlinlang.org, "Configure a Gradle project") lists KGP 2.4.20–2.4.21 for Gradle 7.6.3–9.7.0 and AGP 8.5.2–9.3.1. Gradle 9.7.1 and AGP 9.3.3 are patch releases above those maxima (one Gradle patch, two AGP patches), and that is a deliberate choice. JetBrains does not list them as fully supported, and its page warns that newer versions may bring deprecation warnings or features that do not work. The patches stay on the same minor lines and fix release-build bugs: AGP 9.3.3 makes R8 output deterministic and fixes dex files that intermittently fail verification and crash the app on launch, and Gradle 9.7.1 fixes 9.7.0 regressions. Compared with 9.3.1 / 9.7.0, they add no new build warnings, and the release APKs keep the same manifests, `.so` and dex sizes, and R8 mapping. The AGP release notes require at least Gradle 9.5.0 for AGP 9.3. Flutter 3.50.0 fails the build below Gradle 9.3.1 or AGP 9.1.1 and on AGP 10 or later, and warns below Gradle 9.5.0 and AGP 9.3.1. It skips its KGP check (error below 2.4.10, warning below 2.4.20) under Built-in Kotlin. `flutter analyze --suggestions` flags this set by mistake: its table accepts AGP 9.3.x only with Gradle 9.5.0 and nothing newer, so it prints `Update Gradle to at least "9.5.0"` for Gradle 9.7.1 and still exits 0. AGP 9.4 and Gradle 9.8 also build, but they are above the Kotlin table's limits, so wait for a KGP release that lists them. `android.builtInKotlin=true` means AGP compiles Kotlin with the KGP on the build classpath, which is why the `apply false` line in `settings.gradle.kts` sets the compiler version. The Flutter 3.50.0 Gradle plugin no longer uses the legacy variant API, but `android.newDsl=false` stays because `android_file_picker` (up to 2.1.5, pulled in by `file_picker`) configures the legacy `LibraryExtension` and fails under the new DSL. When it is fixed, set the flag to `true` instead of deleting it, because Flutter's `DisableNewDslMigration` adds `android.newDsl=false` back to a `gradle.properties` that lacks it. See [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#android-build-toolchain).
 
 ### iOS Build Toolchain
 
 | Item                | Value                  | Set in                                                                 |
 |---------------------|------------------------|------------------------------------------------------------------------|
 | Deployment target   | iOS `15.0`             | `IPHONEOS_DEPLOYMENT_TARGET` in `ios/Runner.xcodeproj/project.pbxproj` |
-| Xcode               | 15+ (16 recommended)   | Flutter 3.47.7 minimum                                                 |
+| Xcode               | 15+ (16 recommended)   | Flutter 3.50.0 minimum                                                 |
 | Plugin dependencies | Swift Package Manager  | Flutter-generated `FlutterGeneratedPluginSwiftPackage`                 |
 | CocoaPods           | Not used               | No `ios/Podfile`                                                       |
 
-**iOS toolchain note.** Flutter 3.47.7's migrators raised the deployment target from iOS 13.0 to 15.0, so iOS 13 and 14 devices cannot install new releases. Every iOS plugin ships a `Package.swift`, so the CocoaPods integration was removed as Flutter recommends. Adding a plugin without Swift Package Manager support brings CocoaPods back and fails the Podfile check in `ios-nightly.yml`. To accept that, commit the generated Podfile and the Pods `#include?` lines Flutter adds to `ios/Flutter/{Debug,Release}.xcconfig`, and remove the check. See [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#ios-build-toolchain).
+**iOS toolchain note.** Flutter 3.50.0's migrators raise the deployment target from iOS 13.0 to 15.0, so iOS 13 and 14 devices cannot install new releases. Every iOS plugin ships a `Package.swift`, so the CocoaPods integration was removed as Flutter recommends. Adding a plugin without Swift Package Manager support brings CocoaPods back and fails the Podfile check in `ios-nightly.yml`. To accept that, commit the generated Podfile and the Pods `#include?` lines Flutter adds to `ios/Flutter/{Debug,Release}.xcconfig`, and remove the check. See [`docs/architecture/dependencies.md`](docs/architecture/dependencies.md#ios-build-toolchain).

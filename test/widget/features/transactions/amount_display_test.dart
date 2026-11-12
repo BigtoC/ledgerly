@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/amount_formula.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/keypad_state.dart';
@@ -10,7 +11,7 @@ import 'package:ledgerly/ui/features/transactions/views/amount_display.dart';
 import '../../../support/text_scale.dart';
 
 Widget _wrap(Widget child, {double? textScale}) => MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   builder: textScale == null ? null : textScaleBuilder(textScale),
   home: Scaffold(body: child),

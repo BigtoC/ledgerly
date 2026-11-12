@@ -7,7 +7,7 @@
 
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +18,7 @@ import 'package:ledgerly/app/providers/default_currency_provider.dart';
 import 'package:ledgerly/app/providers/service_providers.dart';
 import 'package:ledgerly/data/database/app_database.dart';
 import 'package:ledgerly/data/services/exchange_rate_service.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/account_filter_providers.dart';
@@ -152,7 +153,7 @@ void main() {
             container: container,
             child: MaterialApp(
               theme: theme,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              localizationsDelegates: appLocalizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               builder: textScaleBuilder(2),
               home: const AnalysisScreen(),

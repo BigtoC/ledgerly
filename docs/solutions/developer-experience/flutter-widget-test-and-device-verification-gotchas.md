@@ -102,7 +102,7 @@ The tip still gets the full CI sequence (format check, analyze, `flutter test`).
 
 **Symptom:** `flutter build ios --no-codesign --debug` printed `No Xcode build settings have been found`, and `xcodebuild -showBuildSettings` reported `Found no destinations for the scheme 'Runner' and action build.` That points at the local Xcode install, most likely a missing iOS platform (inferred), not at the change.
 
-**Still checkable locally:** `ls ios/Flutter/ephemeral/Packages/.packages | grep <plugin>` shows the plugin resolved through SPM (`file_picker_darwin-2.4.0`), and `ios/Podfile` was not created. Leave the real compile to the iOS CI job, which runs on PRs that touch `pubspec.yaml`, `pubspec.lock` or `ios/`.
+**Still checkable locally:** `ls ios/Flutter/ephemeral/Packages/.packages | grep <plugin>` shows the plugin resolved through SPM (`file_picker_darwin-2.5.1`), and `ios/Podfile` was not created. Leave the real compile to the iOS CI job, which runs on PRs that touch `pubspec.yaml`, `pubspec.lock` or `ios/`.
 
 ## Why This Matters
 

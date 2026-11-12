@@ -11,7 +11,7 @@
 // `user_preferences` is populated (first-run seed) before the Settings
 // tab can be rendered.
 
-import 'package:flutter/material.dart' show ThemeMode, Locale;
+import 'package:material_ui/material_ui.dart' show ThemeMode, Locale;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'settings_state.freezed.dart';

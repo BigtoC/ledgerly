@@ -16,7 +16,7 @@
 // state-machine variant). Choosing a date writes the preference and
 // rebuilds into the day-counter view on the same frame.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 

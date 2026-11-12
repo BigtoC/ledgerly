@@ -10,10 +10,11 @@
 //     15%-alpha circle of the same colour.
 //   - Headers grow with 2× text scale without overflowing.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ledgerly/core/utils/color_palette.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/categories/views/category_icon_picker.dart';
 
@@ -43,7 +44,7 @@ Future<void> _openPicker(
   await tester.pumpWidget(
     MaterialApp(
       locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: textScaler),

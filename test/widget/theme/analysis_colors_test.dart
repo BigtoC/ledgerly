@@ -2,7 +2,7 @@
 // table (docs/superpowers/specs/2026-11-02-analysis-redesign-design.md),
 // whose values come from docs/design/analysis-redesign/Main.dc.html.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';

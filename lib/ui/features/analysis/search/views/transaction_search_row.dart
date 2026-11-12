@@ -8,7 +8,7 @@
 // undo window (delegates to caller; the owning controller owns the
 // optimistic-hide + commit timer).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../../../core/utils/color_palette.dart';

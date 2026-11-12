@@ -12,10 +12,12 @@
 //   - undo tapped after leaving the screen raises no error
 //   - error state shows retry button
 //   - rows have non-swipe delete affordance (overflow/trailing icon)
+//   - rows are clipped to the card's rounded corners, and the clip does not
+//     follow the viewport's top edge while scrolled
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +36,7 @@ import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_pro
 import 'package:ledgerly/ui/features/shopping_list/views/shopping_list_screen.dart';
 import 'package:ledgerly/ui/features/shopping_list/view_models/shopping_list_state.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transaction_form_state.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockShoppingListRepository extends Mock
@@ -114,7 +117,7 @@ Widget _wrap({required ProviderContainer container}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _StubRouter.build(const ShoppingListScreen()),
     ),
@@ -399,7 +402,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp.router(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: router,
         ),
@@ -560,4 +563,54 @@ void main() {
       );
     },
   );
+
+  testWidgets('SLS13: rows are clipped to the card\'s rounded corners', (
+    tester,
+  ) async {
+    final container = _makeContainer(
+      fixed: ShoppingListState.data(
+        items: [_item(id: 7, memo: 'Eggs')],
+        pendingDeleteId: null,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+
+    // Inside the row's box but outside the card's 20dp corner.
+    await tester.tapAt(
+      tester.getTopLeft(find.byType(ListTile)) + const Offset(2, 2),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('SHOPPING_ITEM_7'), findsNothing);
+  });
+
+  testWidgets('SLS14: after scrolling, the row at the viewport top is '
+      'tappable at its edge', (tester) async {
+    final container = _makeContainer(
+      fixed: ShoppingListState.data(
+        items: [for (var id = 1; id <= 30; id++) _item(id: id)],
+        pendingDeleteId: null,
+      ),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    tester.state<ScrollableState>(find.byType(Scrollable)).position.jumpTo(300);
+    await tester.pump();
+
+    await tester.tapAt(
+      Offset(
+            tester.getTopLeft(find.byType(ListTile).first).dx,
+            tester.getTopLeft(find.byType(CustomScrollView)).dy,
+          ) +
+          const Offset(2, 2),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('SHOPPING_ITEM_'), findsOneWidget);
+  });
 }

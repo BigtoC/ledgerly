@@ -21,7 +21,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +52,7 @@ import 'package:ledgerly/ui/features/transactions/views/calculator_keypad.dart';
 import 'package:ledgerly/ui/features/transactions/views/category_chip.dart';
 import 'package:ledgerly/ui/features/transactions/views/currency_selector_tile.dart';
 import 'package:ledgerly/ui/features/transactions/views/date_field.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/l10n/app_localizations_en.dart';
 
@@ -216,7 +217,7 @@ void main() {
       ],
       child: MaterialApp.router(
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScale == null ? null : textScaleBuilder(textScale),
       ),
@@ -254,7 +255,7 @@ void main() {
       ],
       child: MaterialApp.router(
         routerConfig: router,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScale == null ? null : textScaleBuilder(textScale),
       ),

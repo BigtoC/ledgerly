@@ -3,7 +3,7 @@
 // Half-width tile (no chevron; issue #100) that shows the selected
 // transaction currency code. Tap opens the currency picker sheet.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../domain/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';

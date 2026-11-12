@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
@@ -102,6 +102,8 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
 
   Future<void> _runQueuedTransitions() async {
     final selection = ref.read(chartsSelectionControllerProvider.notifier);
+    // Reduce Motion: the new period appears in place.
+    final reduceMotion = MediaQuery.reduceMotionOf(context);
     while (_directionQueue.isNotEmpty) {
       final direction = _directionQueue.removeFirst();
       if (direction > 0) {
@@ -110,7 +112,7 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
       } else {
         selection.previousPeriod();
       }
-      _incomingOffset = _buildOffsetAnimation(direction);
+      _incomingOffset = _buildOffsetAnimation(reduceMotion ? 0 : direction);
       _switchController.reset();
       await _switchController.forward();
     }

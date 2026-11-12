@@ -18,7 +18,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +34,7 @@ import 'package:ledgerly/data/repositories/currency_repository.dart';
 import 'package:ledgerly/data/repositories/repository_exceptions.dart';
 import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/accounts/views/account_form_screen.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
@@ -111,7 +112,7 @@ Widget _hostApp({
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     ),

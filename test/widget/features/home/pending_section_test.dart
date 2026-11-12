@@ -7,7 +7,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -28,6 +28,7 @@ import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_state.dart';
 import 'package:ledgerly/ui/features/home/views/pending_section.dart';
 import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockPendingRepo extends Mock implements PendingTransactionRepository {}
@@ -70,7 +71,7 @@ Widget _wrap(ProviderContainer container) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: GoRouter(
         routes: [

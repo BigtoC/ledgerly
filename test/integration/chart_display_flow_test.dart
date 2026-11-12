@@ -3,7 +3,7 @@
 // "subsequent run" pattern from bootstrap_to_home_test.dart so we skip
 // the splash route entirely.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
 import 'package:ledgerly/app/providers/default_currency_provider.dart';

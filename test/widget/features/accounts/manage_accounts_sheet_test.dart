@@ -14,7 +14,7 @@
 //   MAS08 - wide layout keeps the dialog mounted across create-account flow
 //   MAS09 - wide layout keeps the dialog mounted across edit-account flow
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +34,7 @@ import 'package:ledgerly/data/repositories/user_preferences_repository.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_controller.dart';
 import 'package:ledgerly/ui/features/accounts/view_models/accounts_state.dart';
 import 'package:ledgerly/ui/features/settings/views/manage_accounts_sheet.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 class _MockAccountRepository extends Mock implements AccountRepository {}
@@ -118,7 +119,7 @@ Widget _wrapWithOpener({
     child: MediaQuery(
       data: MediaQueryData(size: size),
       child: MaterialApp.router(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: GoRouter(
           routes: [

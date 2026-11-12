@@ -30,7 +30,7 @@ PR #135 removed 2,831 lines (1,614 hand-written `lib/` lines) without changing b
   - `DateTime.parse`, not substring parsing
   - `Locale.toString()`
   - Freezed `==` instead of revision counters
-  - `AppLocalizations.localizationsDelegates` instead of listing the delegates by hand
+  - `appLocalizationsDelegates` (`lib/core/l10n/`) instead of listing the delegates by hand. `AppLocalizations.localizationsDelegates` still lists the deprecated framework Material delegates, which `material_ui` widgets cannot read.
 
   Don't pass `ThemeData` arguments that equal the defaults.
 - **Code only tests call.** No public method, parameter or mode in `lib/` should exist only so a test can reach it. Test through the production path.
@@ -112,7 +112,7 @@ l10n: the ARBs are in `l10n/` and the config is in `l10n.yaml`. `flutter pub get
 ### CI workflows
 
 - **`check.yml`** runs on PRs and pushes to `main`, except changes only under `docs/**`, `**/*.md`, `site/**` or the two site workflows. It runs three parallel jobs, all on `flutter pub get --enforce-lockfile`:
-  - **Analyse:** `build_runner`, failing if the committed generated files change → `dart format --set-exit-if-changed .` → `dart analyze --fatal-infos`, which also fails if the riverpod_lint plugin doesn't load.
+  - **Analyse:** `build_runner`, failing if the committed generated files change → `dart format --set-exit-if-changed .` → `dart analyze --fatal-infos`, which also fails if the output reports an analyzer-plugin error → `tool/check_riverpod_lint.sh`, which fails unless riverpod_lint reports a deliberate violation (a version that fails to resolve is otherwise skipped silently).
   - **Test:** `flutter test test/unit/architecture/` → `flutter test`.
   - **Android:** an arm64 APK, signed release if the signing secrets exist and debug otherwise, built with `--dart-define=FOREX_API_URL`.
 - **`android-release.yml`** runs on a `vX.Y.Z` tag. It fails unless the tag matches `version:` in `pubspec.yaml`, so bump that first. It then builds split signed APKs with SHA-256 checksums and uploads them to the GitHub Release.
@@ -164,7 +164,7 @@ The rules live in [`PRD.md` → *Security & Privacy*](PRD.md#security--privacy).
 
 ## Skills Available
 
-Four Flutter skills from `flutter/agent-plugins` live in `.agents/skills/`, symlinked into `.claude/skills/` and pinned in `skills-lock.json`. They target a generic Flutter app, so read each one with its notes below. Where a skill disagrees with `PRD.md` or `docs/architecture/`, those win.
+Four Flutter skills from `flutter/agent-plugins` live in `.agents/skills/`, symlinked into `.claude/skills/` and pinned in `skills-lock.json`. They target a generic Flutter app, so read each one with its notes below. Their samples import `package:flutter/material.dart`, which Flutter 3.50 deprecates; Ledgerly code imports `package:material_ui/material_ui.dart` (and `package:cupertino_ui/cupertino_ui.dart`). Where a skill disagrees with `PRD.md` or `docs/architecture/`, those win.
 
 ### `flutter-apply-architecture-best-practices` (structuring a feature)
 
@@ -198,7 +198,7 @@ Take its advice on measuring space (`MediaQuery.sizeOf`, `LayoutBuilder`), on `E
 Take its `WidgetTester`, `Finder` and pump workflow, and skip its setup step: `flutter_test` and `mocktail` are already dev dependencies. Then:
 
 - **Location** → `test/widget/features/<feature>/`, or `test/widget/app/` for `lib/app/` and `lib/ui/core/widgets/`. Never the root of `test/`.
-- **Host** → a `MaterialApp` with `localizationsDelegates` and `supportedLocales` from `AppLocalizations`. Without `supportedLocales`, a `zh_TW` test silently renders English. If the widget navigates, use `MaterialApp.router` with a local `GoRouter` whose other routes are stubs (`home_screen_test.dart`). For the whole shell, use `test/support/test_app.dart`.
+- **Host** → a `MaterialApp` with `localizationsDelegates: appLocalizationsDelegates` and `supportedLocales: AppLocalizations.supportedLocales`. Without `supportedLocales`, a `zh_TW` test silently renders English; with `AppLocalizations.localizationsDelegates`, it fails with no `MaterialLocalizations`. If the widget navigates, use `MaterialApp.router` with a local `GoRouter` whose other routes are stubs (`home_screen_test.dart`). For the whole shell, use `test/support/test_app.dart`.
 - **Providers** → an `UncontrolledProviderScope` with `addTearDown(container.dispose)`; otherwise Drift's stream timers fail the teardown. Mock repositories with `mocktail` or fake the controller. Pass `retry: noProviderRetry` when a provider is meant to fail.
 - **`@Dependencies`** → required on `main()` and on any helper or test-only widget that pumps a scoped widget or reads a scoped provider, which covers most feature screens. Copy the names from the lint's "Missing dependencies" message ([`testing.md` → *Patterns*](docs/architecture/testing.md#patterns)). CI fails without them.
 - **Drift** → run every Drift query inside `tester.runAsync(...)`: the seed, inserts, lookups and reads after the flow. Creating the database and the container can stay outside.

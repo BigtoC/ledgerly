@@ -19,7 +19,7 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
@@ -72,6 +72,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// slide is not a drain, so a step queued during it still starts one.
   bool _draining = false;
 
+  /// The platform's Reduce Motion setting. [initState] cannot read
+  /// MediaQuery, so [didChangeDependencies] keeps it.
+  bool _reduceMotion = false;
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +88,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.reduceMotionOf(context);
+  }
+
+  @override
   void dispose() {
     _daySwitchController.dispose();
     super.dispose();
@@ -92,10 +102,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Animation<Offset> _buildOffsetAnimation(int direction) {
     // direction +1 = newer day, slides in from right
     // direction -1 = older day, slides in from left
+    // Reduce Motion: no slide, the new day appears in place
     final begin = direction >= 0
         ? const Offset(1.0, 0.0)
         : const Offset(-1.0, 0.0);
-    return Tween<Offset>(begin: begin, end: Offset.zero).animate(
+    return Tween<Offset>(
+      begin: _reduceMotion ? Offset.zero : begin,
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(parent: _daySwitchController, curve: _kDaySwitchCurve),
     );
   }

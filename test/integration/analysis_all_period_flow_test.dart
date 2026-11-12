@@ -3,7 +3,7 @@
 // the trend's first month (spec § All time, plan D13).
 
 import 'package:drift/drift.dart' show Variable;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +16,7 @@ import 'package:ledgerly/data/services/exchange_rate_service.dart';
 import 'package:ledgerly/domain/models/account.dart';
 import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/features/analysis/charts/view_models/account_filter_providers.dart';
@@ -155,7 +156,7 @@ void main() {
         container: container,
         child: MaterialApp(
           theme: lightTheme,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const AnalysisScreen(),
         ),

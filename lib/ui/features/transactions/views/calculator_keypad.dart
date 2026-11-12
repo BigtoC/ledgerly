@@ -23,7 +23,7 @@
 //     (PRD → Accessibility lists the exception). Given less height than
 //     [minHeight], they shrink further (issue #100).
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 

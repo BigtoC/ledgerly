@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Shows [child] in a modal bottom sheet [heightFactor] of the screen tall
 /// below 600dp, and in a `Dialog` capped at [maxWidth] × [maxHeight] from

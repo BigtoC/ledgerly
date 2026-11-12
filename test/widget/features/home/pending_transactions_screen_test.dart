@@ -9,7 +9,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +25,7 @@ import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/pending_transaction.dart';
 import 'package:ledgerly/domain/models/transaction.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_state.dart';
@@ -73,7 +74,7 @@ Widget _wrap(ProviderContainer container, {TransitionBuilder? builder}) {
   return UncontrolledProviderScope(
     container: container,
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: builder,
       routerConfig: GoRouter(

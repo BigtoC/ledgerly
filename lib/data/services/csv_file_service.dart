@@ -21,7 +21,7 @@ typedef PickedFile = ({String name, Uint8List bytes});
 ///
 /// The platform pickers copy the chosen file: `file_selector_android` into
 /// the app's cache directory, the iOS document picker into the app's
-/// `tmp/`. Saving on iOS also leaves a copy in `tmp/` (`file_picker`
+/// `tmp/`. Saving on iOS also leaves a copy under `tmp/` (`file_picker`
 /// writes the bytes there before showing the dialog; see [save]). Those
 /// copies hold
 /// financial data, so [pick] and [save] delete them. File names are never
@@ -84,21 +84,28 @@ class CsvFileService {
   /// Shows the system save dialog for [bytes] named [fileName]. Returns
   /// false when the user cancels.
   ///
-  /// On iOS, `file_picker_darwin` 2.4.0 writes the bytes to
-  /// `NSTemporaryDirectory()/<fileName>` before presenting the export
-  /// picker and never deletes them (`IOSFilePickerHandler.saveFile`), so
-  /// that path is deleted afterwards, saved or not. Recheck it when
-  /// upgrading the plugin. Other platforms write straight to the chosen
-  /// location, which may itself be the temp directory, so nothing is
-  /// deleted there.
+  /// On iOS, `file_picker_darwin` 2.5.1 writes the bytes to
+  /// `NSTemporaryDirectory()/flutter_file_picker/<UUID>/<fileName>` before
+  /// presenting the export picker and never deletes them
+  /// (`IOSFilePickerHandler.saveFile`), and it does not report the UUID. So
+  /// the whole `flutter_file_picker` directory, which only the plugin
+  /// writes and this app uses only for this dialog, is deleted afterwards,
+  /// saved or not. Recheck it when upgrading the plugin. Other platforms
+  /// write straight to the chosen location, which may itself be the temp
+  /// directory, so nothing is deleted there.
   Future<bool> save(String fileName, Uint8List bytes) async {
     try {
       return await _saveFile(fileName: fileName, bytes: bytes);
     } finally {
       if (_isIOS) {
-        await _deleteCacheCopy(
-          '${_systemTemporaryDirectory().path}${Platform.pathSeparator}$fileName',
-        );
+        try {
+          await Directory(
+            '${_systemTemporaryDirectory().path}${Platform.pathSeparator}'
+            'flutter_file_picker',
+          ).delete(recursive: true);
+        } on Object {
+          // A missing or undeletable copy must not fail the export.
+        }
       }
     }
   }
@@ -118,8 +125,7 @@ class CsvFileService {
   /// cache dir; `Library/Caches` on iOS) or the system temp directory (the
   /// app's `tmp/` on iOS), where the platform picker put its copy.
   /// Failures, including a missing copy, are ignored: the copy is the
-  /// platform's, and a leftover cache file must not fail the import or
-  /// export.
+  /// platform's, and a leftover cache file must not fail the import.
   Future<void> _deleteCacheCopy(String path) async {
     try {
       // Resolve links so `/var` and `/private/var` (iOS) compare equal.

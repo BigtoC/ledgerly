@@ -1,5 +1,5 @@
 import 'package:fl_chart/fl_chart.dart' show BarChart;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +13,7 @@ import 'package:ledgerly/domain/models/category.dart';
 import 'package:ledgerly/domain/models/category_slice.dart';
 import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/domain/models/time_bucket_slice.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/core/theme/analysis_colors.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
@@ -672,6 +673,42 @@ void main() {
       );
     });
   });
+
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+      'the period switch ${reduceMotion ? 'does not slide' : 'slides'}'
+      ' with Reduce Motion ${reduceMotion ? 'on' : 'off'}',
+      (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            FakeAccessibilityFeatures(reduceMotion: reduceMotion);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
+        await _pumpSection(tester);
+
+        await tester.tap(find.byTooltip('Previous period'));
+        await tester.pump();
+        // Halfway through the 360 ms slide.
+        await tester.pump(const Duration(milliseconds: 180));
+        final dx = tester
+            .widget<SlideTransition>(
+              find
+                  .ancestor(
+                    of: find.byType(ChartsBreakdownCard),
+                    matching: find.byType(SlideTransition),
+                  )
+                  .first,
+            )
+            .position
+            .value
+            .dx;
+        expect(dx, reduceMotion ? 0 : lessThan(0));
+        await tester.pumpAndSettle();
+        // The previous period's net: the step still happened.
+        expect(find.text(r'-$7.00'), findsOneWidget);
+      },
+    );
+  }
 }
 
 @Dependencies([
@@ -787,7 +824,7 @@ Future<_MockTxRepo> _pumpSection(
       ],
       child: MaterialApp(
         theme: lightTheme,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScaleBuilder(textScale),
         home: const Scaffold(

@@ -4,7 +4,7 @@
 // `routerProvider` reads a pre-seeded `SplashGateSnapshot` whose state is
 // controlled by each test case. No live DB interaction required.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/experimental/scope.dart';
@@ -451,10 +451,10 @@ void main() {
       expect(find.byType(AccountFormScreen), findsNothing);
     });
 
-    // go_router 18 only recognises `package:material_ui`'s MaterialApp, so
-    // plain `builder:` routes would fall back to NoTransitionPage. Non-modal
-    // routes and the shell must stay on Material pages (push transitions,
-    // iOS back-swipe).
+    // go_router 18 builds a MaterialPage for plain `builder:` routes only when
+    // it finds `package:material_ui`'s MaterialApp; otherwise it falls back to
+    // NoTransitionPage. Non-modal routes and the shell must stay on Material
+    // pages (push transitions, iOS back-swipe).
     testWidgets('pushed and shell routes use MaterialPage', (tester) async {
       final db = newTestAppDatabase();
       addTearDown(db.close);
@@ -471,15 +471,17 @@ void main() {
 
       final router = container.read(routerProvider);
       addTearDown(router.dispose);
-      router.go('/home/shopping-list');
+      router.go('/home/shopping-list?from=test');
 
       await tester.pumpWidget(buildTestApp(container: container));
       await tester.pumpAndSettle();
 
       Object? pageOf(Type widget) =>
           ModalRoute.of(tester.element(find.byType(widget)))!.settings;
-      expect(pageOf(ShoppingListScreen), isA<MaterialPage<void>>());
       expect(pageOf(AdaptiveShell), isA<MaterialPage<void>>());
+      final page = pageOf(ShoppingListScreen)! as MaterialPage<void>;
+      expect(page.name, 'shopping-list');
+      expect(page.arguments, {'from': 'test'});
     });
 
     testWidgets('/settings/pending renders PendingTransactionsScreen in the '
@@ -513,6 +515,40 @@ void main() {
         isA<MaterialPage<void>>(),
       );
       expect(find.byType(PendingSnackBars), findsOneWidget);
+    });
+
+    // go_router 18.1.2 claimed system back for the hidden Settings branch's
+    // sub-route, so back on Home did nothing instead of leaving the app.
+    testWidgets('system back on Home is not swallowed by another branch '
+        'sub-route', (tester) async {
+      final db = newTestAppDatabase();
+      addTearDown(db.close);
+      await tester.runAsync(() => runTestSeed(db));
+      final container = makeTestContainer(
+        db: db,
+        extraOverrides: [
+          splashGateSnapshotProvider.overrideWithValue(
+            SplashGateSnapshot.withInitial(enabled: false, startDate: null),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+      addTearDown(router.dispose);
+      router.go('/settings/categories');
+
+      await tester.pumpWidget(buildTestApp(container: container));
+      await tester.pumpAndSettle();
+      tester
+          .state<StatefulNavigationShellState>(
+            find.byType(StatefulNavigationShell),
+          )
+          .goBranch(0);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(await router.routerDelegate.popRoute(), isFalse);
     });
 
     // RT02 — /home/shopping-list/:id routes to the form (root navigator)

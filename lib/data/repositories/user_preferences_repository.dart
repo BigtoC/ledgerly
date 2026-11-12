@@ -22,7 +22,7 @@
 
 import 'dart:convert';
 
-import 'package:flutter/material.dart' show ThemeMode, Locale;
+import 'package:material_ui/material_ui.dart' show ThemeMode, Locale;
 
 import '../database/app_database.dart';
 import '../database/daos/user_preferences_dao.dart';

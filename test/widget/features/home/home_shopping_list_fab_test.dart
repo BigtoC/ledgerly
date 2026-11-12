@@ -11,7 +11,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -30,6 +30,7 @@ import 'package:ledgerly/data/repositories/shopping_list_repository.dart';
 import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/ui/features/home/views/home_screen.dart';
 import 'package:ledgerly/ui/features/home/view_models/pending_controller.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────
@@ -98,7 +99,7 @@ Widget _makeApp({
       shoppingListRepositoryProvider.overrideWithValue(slRepo),
     ],
     child: MaterialApp.router(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _buildRouter(homeWidget: const HomeScreen()),
     ),

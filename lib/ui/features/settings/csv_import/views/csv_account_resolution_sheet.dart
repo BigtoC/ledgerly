@@ -5,7 +5,7 @@
 // and pops with the one the user taps; dismissing it returns null. Pure:
 // everything it shows comes from the matcher's `CsvAccountMatch`.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../../domain/models/account.dart';
 import '../../../../../domain/models/csv_import.dart';

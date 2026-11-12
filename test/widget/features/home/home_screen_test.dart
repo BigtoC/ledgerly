@@ -13,7 +13,7 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,6 +41,7 @@ import 'package:ledgerly/ui/features/home/views/pending_snack_bars.dart';
 import 'package:ledgerly/ui/features/home/views/day_navigation_header.dart';
 import 'package:ledgerly/ui/features/home/views/summary_strip.dart';
 import 'package:ledgerly/ui/features/home/views/transaction_tile.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
@@ -182,7 +183,7 @@ void main() {
         pendingTransactionRepositoryProvider.overrideWithValue(pendingRepo),
       ],
       child: MaterialApp.router(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: textScale == null ? null : textScaleBuilder(textScale),
         routerConfig: GoRouter(
@@ -1134,6 +1135,48 @@ void main() {
       findsNothing,
     );
   });
+
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+      'WH25: the day switch ${reduceMotion ? 'does not slide' : 'slides'}'
+      ' with Reduce Motion ${reduceMotion ? 'on' : 'off'}',
+      (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            FakeAccessibilityFeatures(reduceMotion: reduceMotion);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
+        await tester.binding.setSurfaceSize(const Size(400, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(makeApp());
+        await seedAll(tester);
+        final now = DateTime.now();
+        activityCtrl.add([DateTime(now.year, now.month, now.day)]);
+        feed();
+        await tester.pump(const Duration(milliseconds: 200));
+
+        await tester.tap(find.widgetWithIcon(IconButton, Icons.chevron_left));
+        await tester.pump(const Duration(milliseconds: 50));
+        feed();
+        // About halfway through the 280 ms slide.
+        await tester.pump(const Duration(milliseconds: 140));
+        final dx = tester
+            .widget<SlideTransition>(
+              find
+                  .ancestor(
+                    of: find.byType(DayNavigationHeader),
+                    matching: find.byType(SlideTransition),
+                  )
+                  .first,
+            )
+            .position
+            .value
+            .dx;
+        expect(dx, reduceMotion ? 0 : lessThan(0));
+        await tester.pumpAndSettle();
+      },
+    );
+  }
 }
 
 class _StubFormScreen extends StatelessWidget {

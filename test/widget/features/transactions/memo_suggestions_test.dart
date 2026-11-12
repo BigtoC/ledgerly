@@ -2,9 +2,10 @@
 // chips render the provider's memos, render nothing when empty, and a
 // tap fills the memo with the cursor placed at the end.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transactions_providers.dart';
 import 'package:ledgerly/ui/features/transactions/views/memo_field.dart';
@@ -46,7 +47,7 @@ Widget _mount(List<String> memos, {List<String> allMemos = const []}) {
       txAllMemosProvider(7).overrideWith((ref) => Stream.value(allMemos)),
     ],
     child: const MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: _Host()),
     ),

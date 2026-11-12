@@ -7,7 +7,7 @@
 // values — those are derived and may shift with future Flutter upgrades;
 // the splash-screen golden is an M5 concern.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/ui/core/theme/app_theme.dart';
 import 'package:ledgerly/ui/core/theme/color_schemes.dart';

@@ -1,5 +1,5 @@
 // lib/core/utils/color_palette.dart
-import 'package:flutter/material.dart' show Color;
+import 'package:material_ui/material_ui.dart' show Color;
 
 /// -----------------------------------------------------------------------
 /// APPEND-ONLY PALETTE — DO NOT REORDER. DO NOT REMOVE. DO NOT INSERT.

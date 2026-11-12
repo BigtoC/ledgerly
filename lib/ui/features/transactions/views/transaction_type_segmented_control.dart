@@ -3,7 +3,7 @@
 // Two-segment Material `SegmentedButton` for expense / income, kept as
 // a value-in / callback-out segment selector.
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
