@@ -1391,7 +1391,7 @@ Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14
 | `fl_chart`      | `^1.3.0`  | Pie + daily bar charts (Analysis tab)                                           |
 | `crypto`        | `^3.0.8`  | SHA-256 check of downloaded app-update APKs                                     |
 | `file_selector` | `^1.1.0`  | System file picker (Fortune City CSV import)                                    |
-| `file_picker`   | `^13.1.0` | System save dialog (CSV export); Swift Package Manager on iOS, no CocoaPods     |
+| `file_picker`   | `^13.3.3` | System save dialog (CSV export); Swift Package Manager on iOS, no CocoaPods     |
 | `csv`           | `^8.0.0`  | RFC 4180 decoding and encoding (CSV import and export)                          |
 
 ### Deferred (Not yet shipped)

@@ -96,7 +96,12 @@ void main() {
   });
 
   group('save', () {
-    /// Mimics the iOS plugin: writes `tmp/<fileName>`, then the user saves
+    /// Where `file_picker_darwin` 2.5.1 writes the iOS export copy:
+    /// `tmp/flutter_file_picker/<UUID>/<fileName>`.
+    File exportCopy(String fileName) =>
+        File('${tmp.path}/flutter_file_picker/0F8FAD5B/$fileName');
+
+    /// Mimics the iOS plugin: writes [exportCopy], then the user saves
     /// ([saved] true) or cancels.
     CsvFileService saverFor({
       required bool saved,
@@ -105,7 +110,9 @@ void main() {
     }) => CsvFileService(
       saveFile: ({required fileName, required bytes}) async {
         calls?.add(fileName);
-        File('${tmp.path}/$fileName').writeAsBytesSync(bytes);
+        exportCopy(fileName)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(bytes);
         return saved;
       },
       temporaryDirectory: () async => cache,
@@ -115,6 +122,7 @@ void main() {
 
     test('returns true and deletes the iOS temp copy once saved', () async {
       final calls = <String>[];
+      final other = File('${tmp.path}/other.csv')..writeAsBytesSync([9]);
 
       final saved = await saverFor(
         saved: true,
@@ -123,7 +131,9 @@ void main() {
 
       expect(saved, isTrue);
       expect(calls, ['export.csv']);
-      expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
+      expect(exportCopy('export.csv').existsSync(), isFalse);
+      // Only the plugin's directory goes; the rest of tmp/ stays.
+      expect(other.existsSync(), isTrue);
     });
 
     test('returns false and still deletes the copy when cancelled', () async {
@@ -131,19 +141,19 @@ void main() {
           .save('export.csv', Uint8List.fromList([1]));
 
       expect(saved, isFalse);
-      expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
+      expect(exportCopy('export.csv').existsSync(), isFalse);
     });
 
-    test('keeps a file the user saved into temp on other platforms', () async {
-      // On desktop the user may pick the temp dir itself; that file is the
-      // export, not a plugin copy.
+    test('deletes nothing under temp on other platforms', () async {
+      // Other platforms write straight to the chosen location, which may be
+      // the temp dir itself, so nothing there is a plugin copy.
       final saved = await saverFor(
         saved: true,
         isIOS: false,
       ).save('export.csv', Uint8List.fromList([1]));
 
       expect(saved, isTrue);
-      expect(File('${tmp.path}/export.csv').existsSync(), isTrue);
+      expect(exportCopy('export.csv').existsSync(), isTrue);
     });
 
     test('succeeds when no temp copy exists', () async {
@@ -160,7 +170,9 @@ void main() {
     test('deletes the copy when saving throws', () async {
       final service = CsvFileService(
         saveFile: ({required fileName, required bytes}) async {
-          File('${tmp.path}/$fileName').writeAsBytesSync(bytes);
+          exportCopy(fileName)
+            ..createSync(recursive: true)
+            ..writeAsBytesSync(bytes);
           throw const FileSystemException('save failed');
         },
         temporaryDirectory: () async => cache,
@@ -172,7 +184,7 @@ void main() {
         service.save('export.csv', Uint8List.fromList([1])),
         throwsA(isA<FileSystemException>()),
       );
-      expect(File('${tmp.path}/export.csv').existsSync(), isFalse);
+      expect(exportCopy('export.csv').existsSync(), isFalse);
     });
   });
 }
