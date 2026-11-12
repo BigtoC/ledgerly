@@ -53,10 +53,9 @@ analyzer:
 # against that analysis_server_plugin, 3.1.6 does not resolve, and 3.1.7
 # and 3.1.8 (analyzer 13) hang `dart analyze`. A version that fails to
 # resolve is skipped silently: no error message, no riverpod_lint
-# diagnostics, and the run passes. So after changing this, add a temporary
-# violation (a public field on a Notifier trips
-# avoid_public_notifier_properties) and check that `dart analyze` reports
-# it. `dart analyze` waits for the plugin and
+# diagnostics, and the run passes. CI catches that with
+# tool/check_riverpod_lint.sh, which fails unless a deliberate violation is
+# reported; run it after changing this. `dart analyze` waits for the plugin and
 # always reports its warnings; `flutter analyze` does not wait and reports
 # them only some of the time. CI runs `dart analyze --fatal-infos`, so
 # riverpod_lint warnings fail the build.

@@ -62,16 +62,21 @@ jobs:
         # (configured under `plugins:` in analysis_options.yaml), so its
         # warnings are reported every run. `flutter analyze` does not wait
         # for it and reports them only some of the time. `--fatal-infos`
-        # keeps infos fatal, as `flutter analyze` does. A plugin that fails
-        # to load is skipped without failing the run, so fail on that
-        # message too rather than silently losing riverpod_lint.
+        # keeps infos fatal, as `flutter analyze` does. A plugin that loads
+        # but then fails prints that message, so fail on it too.
         run: |
           set -o pipefail
           dart analyze --fatal-infos 2>&1 | tee analyze.log
           if grep -q 'error occurred while executing an analyzer plugin' analyze.log; then
-            echo '::error::riverpod_lint plugin failed to load'
+            echo '::error::An analyzer plugin (riverpod_lint) failed while running; see the dart analyze output above.'
             exit 1
           fi
+
+      - name: Check riverpod_lint runs
+        # A riverpod_lint version that cannot resolve on this Dart SDK is
+        # skipped silently, so the step above passes without it. This fails
+        # unless riverpod_lint reports a deliberate violation.
+        run: tool/check_riverpod_lint.sh
 
   test:
     name: Test
