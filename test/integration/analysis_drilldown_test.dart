@@ -104,11 +104,8 @@ Future<void> _seed(
 
 /// Holds back the drill-down rows until [release] completes, so the test
 /// decides when they land, on a fake clock or a device's real one.
-class _SlowDrilldownController extends SliceDrilldownController {
-  _SlowDrilldownController(this.release);
-
-  final Future<void> release;
-
+class _SlowDrilldownController(final Future<void> release)
+    extends SliceDrilldownController {
   @override
   Stream<SliceDrilldownData> build() {
     final rows = super.build();

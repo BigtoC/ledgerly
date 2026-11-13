@@ -46,16 +46,13 @@ const _editState = RecurringRuleFormState(
   dayOfMonth: 15,
 );
 
-class _FakeFormController extends RecurringRuleFormController {
-  _FakeFormController(
-    this._initial, {
-    this.saveOutcome = const SaveRecurringRuleOutcome.rejected(),
-    this.archiveOutcome = const ArchiveRecurringRuleOutcome.ok(),
-  });
-  final RecurringRuleFormState _initial;
-  final SaveRecurringRuleOutcome saveOutcome;
-  final ArchiveRecurringRuleOutcome archiveOutcome;
-
+class _FakeFormController(
+  final RecurringRuleFormState _initial, {
+  final SaveRecurringRuleOutcome saveOutcome =
+      const SaveRecurringRuleOutcome.rejected(),
+  final ArchiveRecurringRuleOutcome archiveOutcome =
+      const ArchiveRecurringRuleOutcome.ok(),
+}) extends RecurringRuleFormController {
   @override
   Future<RecurringRuleFormState> build({int? ruleId}) async {
     return _initial;

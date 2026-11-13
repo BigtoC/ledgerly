@@ -28,13 +28,11 @@ const _food = Category(
   l10nKey: 'category.food',
 );
 
-class _FakeCsvExportController extends CsvExportController {
-  _FakeCsvExportController(this._initial, this.calls);
-
+class _FakeCsvExportController(
   /// Null keeps the controller loading.
-  final CsvExportState? _initial;
-  final List<Object> calls;
-
+  final CsvExportState? _initial,
+  final List<Object> calls,
+) extends CsvExportController {
   @override
   Future<CsvExportState> build() => _initial == null
       ? Completer<CsvExportState>().future

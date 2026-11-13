@@ -1179,11 +1179,8 @@ void main() {
   }
 }
 
-class _StubFormScreen extends StatelessWidget {
-  const _StubFormScreen({required this.label});
-
-  final String label;
-
+class const _StubFormScreen({required final String label})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(body: Center(child: Text(label)));

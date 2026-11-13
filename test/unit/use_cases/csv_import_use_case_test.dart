@@ -32,11 +32,8 @@ const _samplePath = 'test/data/import_fortune_city_data.csv';
 const _header = 'Account,Category,Amount,Currency,Recorded At,note,Account ID';
 const _salaryNotes = {'Salary', '薪資', '薪资'};
 
-class _FakeCsvFileService implements CsvFileService {
-  _FakeCsvFileService(this._pick);
-
-  final Future<PickedFile?> Function() _pick;
-
+class _FakeCsvFileService(final Future<PickedFile?> Function() _pick)
+    implements CsvFileService {
   @override
   Future<PickedFile?> pick() => _pick();
 

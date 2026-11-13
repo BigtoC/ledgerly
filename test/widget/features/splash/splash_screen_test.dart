@@ -377,10 +377,8 @@ void main() {
 
 /// Test double that skips the stream-combine path and yields a fixed state,
 /// or fails when [_fixed] is null.
-class _FakeSplashController extends SplashController {
-  _FakeSplashController(this._fixed);
-  final SplashState? _fixed;
-
+class _FakeSplashController(final SplashState? _fixed)
+    extends SplashController {
   @override
   Stream<SplashState> build() async* {
     yield _fixed ?? (throw Exception('boom'));

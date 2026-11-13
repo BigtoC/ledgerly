@@ -39,12 +39,8 @@ AppDatabase newTestAppDatabase() => AppDatabase(NativeDatabase.memory());
 
 /// Deterministic [LocaleService] stub — returns a fixed locale string so
 /// tests are not affected by the host machine's OS locale.
-class FixedLocaleService implements LocaleService {
-  const FixedLocaleService(this.deviceLocale);
-
-  @override
-  final String deviceLocale;
-}
+class const FixedLocaleService(@override final String deviceLocale)
+    implements LocaleService;
 
 class _NoRatesService extends Mock implements ExchangeRateService {}
 

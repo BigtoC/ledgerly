@@ -67,30 +67,24 @@ class _MockAccountRepository extends Mock implements AccountRepository {}
 
 class _MockCurrencyRepository extends Mock implements CurrencyRepository {}
 
-class _FakeSettingsController extends SettingsController {
-  _FakeSettingsController(this._fixed);
-  final SettingsState _fixed;
-
+class _FakeSettingsController(final SettingsState _fixed)
+    extends SettingsController {
   @override
   Stream<SettingsState> build() async* {
     yield _fixed;
   }
 }
 
-class _FakeAccountsController extends AccountsController {
-  _FakeAccountsController(this._fixed);
-  final AccountsState _fixed;
-
+class _FakeAccountsController(final AccountsState _fixed)
+    extends AccountsController {
   @override
   Stream<AccountsState> build() async* {
     yield _fixed;
   }
 }
 
-class _FakePendingController extends PendingController {
-  _FakePendingController(this._fixed);
-  final PendingState _fixed;
-
+class _FakePendingController(final PendingState _fixed)
+    extends PendingController {
   @override
   Stream<PendingState> build() async* {
     yield _fixed;

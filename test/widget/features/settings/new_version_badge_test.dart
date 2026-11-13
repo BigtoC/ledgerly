@@ -44,9 +44,8 @@ final _inApp = AppUpdate(
 /// No SHA-256 or size, so the badge can only open the browser.
 final _browserOnly = _inApp.copyWith(sha256: null, sizeBytes: null);
 
-class _FakeController extends AppUpdateController {
-  _FakeController(this.initial);
-  final AppUpdateState initial;
+class _FakeController(final AppUpdateState initial)
+    extends AppUpdateController {
   final started = <AppUpdate>[];
   @override
   AppUpdateState build() => initial;

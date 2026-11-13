@@ -126,17 +126,13 @@ class _HomeStub extends StatelessWidget {
   Widget build(BuildContext context) => const Scaffold(body: Text('home-stub'));
 }
 
-class _FakeTransactionFormController extends TransactionFormController {
-  _FakeTransactionFormController({
-    required this._fixed,
-    this._saveDraftOutcome = const DraftSubmissionOutcome.ignored(),
-    this._convertDraftOutcome = const DraftSubmissionOutcome.ignored(),
-  });
-
-  final TransactionFormState _fixed;
-  final DraftSubmissionOutcome _saveDraftOutcome;
-  final DraftSubmissionOutcome _convertDraftOutcome;
-
+class _FakeTransactionFormController({
+  required final TransactionFormState _fixed,
+  final DraftSubmissionOutcome _saveDraftOutcome =
+      const DraftSubmissionOutcome.ignored(),
+  final DraftSubmissionOutcome _convertDraftOutcome =
+      const DraftSubmissionOutcome.ignored(),
+}) extends TransactionFormController {
   @override
   TransactionFormState build() => _fixed;
 
