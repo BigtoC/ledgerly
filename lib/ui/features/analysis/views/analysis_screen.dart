@@ -106,6 +106,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
 
     Widget resultList(List<CategorySearchResult> results, String query) =>
         ListView.builder(
+          physics: const BouncingScrollPhysics(),
           itemCount: results.length,
           itemBuilder: (_, i) => CategorySearchTile(
             result: results[i],
@@ -122,6 +123,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
         // The placeholder lives above the chart as a subtle "search hint";
         // charts render the full breakdown.
         AnalysisIdle() => const SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
           child: Column(children: [ChartsSection()]),
         ),
         AnalysisLoading(:final previous, :final query) =>
