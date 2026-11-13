@@ -1,6 +1,7 @@
 // `showMemoPickerSheet` — bottom sheet listing every memo used in a
 // category, newest first. Opened from the "More" chip in
-// `MemoSuggestions`. Resolves with the picked memo, or null on dismiss.
+// `MemoSuggestions`. Resolves with the picked suggestion (memo and its
+// account), or null on dismiss.
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../view_models/transactions_providers.dart';
 
-Future<String?> showMemoPickerSheet(BuildContext context, int categoryId) {
-  return showModalBottomSheet<String>(
+Future<MemoSuggestion?> showMemoPickerSheet(
+  BuildContext context,
+  int categoryId,
+) {
+  return showModalBottomSheet<MemoSuggestion>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -26,7 +30,8 @@ class const _MemoPickerSheet({required final int categoryId})
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final memos =
-        ref.watch(txAllMemosProvider(categoryId)).value ?? const <String>[];
+        ref.watch(txAllMemosProvider(categoryId)).value ??
+        const <MemoSuggestion>[];
 
     return SafeArea(
       top: false,
@@ -47,10 +52,10 @@ class const _MemoPickerSheet({required final int categoryId})
                 child: Divider(height: 1),
               ),
               itemBuilder: (context, index) {
-                final memo = memos[index];
+                final suggestion = memos[index];
                 return ListTile(
-                  title: Text(memo),
-                  onTap: () => Navigator.of(context).pop(memo),
+                  title: Text(suggestion.memo),
+                  onTap: () => Navigator.of(context).pop(suggestion),
                 );
               },
             ),

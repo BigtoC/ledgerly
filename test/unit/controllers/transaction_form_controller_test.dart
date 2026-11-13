@@ -12,6 +12,9 @@
 //     transaction type.
 //   - Account swap with currency change refuses without
 //     `clearAmountOnCurrencyChange`; accepts and clears when allowed.
+//   - Picking a memo suggestion fills the memo and switches to its
+//     account (issue #152), clearing the amount when the currency
+//     changes; an archived account (null) leaves the account alone.
 //   - Save returns `saved(tx)` with the persisted Transaction, `invalid`
 //     when `canSave` is false, and `failed` on repository error after
 //     clearing `isSaving` (state stays `.data`). A save that completes
@@ -77,6 +80,12 @@ const _eur = Currency(
 );
 
 const _account = Account(id: 1, name: 'Cash', accountTypeId: 1, currency: _usd);
+const _accountInvest = Account(
+  id: 3,
+  name: 'Investment',
+  accountTypeId: 1,
+  currency: _usd,
+);
 const _accountJpy = Account(
   id: 2,
   name: 'Yen',
@@ -1288,6 +1297,107 @@ void main() {
       // Expression preserved because currency did not change
       expect(data.keypad.leftOperand(decimals: 2), 100);
       expect(data.keypad.operator, CalcOperator.add);
+    });
+  });
+
+  group('selectMemoSuggestion (issue #152)', () {
+    @Dependencies([TransactionFormController])
+    Future<TransactionFormController> hydratedAdd(ProviderContainer c) async {
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForAdd();
+      return controller;
+    }
+
+    @Dependencies([TransactionFormController])
+    TransactionFormData read(ProviderContainer c) =>
+        c.read(transactionFormControllerProvider) as TransactionFormData;
+
+    test('TC100: fills the memo and switches to the memo\'s account', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = await hydratedAdd(c);
+      controller.appendDigit(5);
+
+      controller.selectMemoSuggestion((memo: 'Stock', account: _accountInvest));
+
+      final data = read(c);
+      expect(data.memo, 'Stock');
+      expect(data.selectedAccount, _accountInvest);
+      expect(data.amountMinorUnits, 500);
+    });
+
+    test('TC101: a different currency follows the account and clears the '
+        'amount without asking', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = await hydratedAdd(c);
+      controller.appendDigit(5);
+
+      controller.selectMemoSuggestion((memo: 'Sushi', account: _accountJpy));
+
+      final data = read(c);
+      expect(data.memo, 'Sushi');
+      expect(data.selectedAccount, _accountJpy);
+      expect(data.displayCurrency.code, 'JPY');
+      expect(data.amountMinorUnits, 0);
+    });
+
+    test('TC102: with a touched currency only the account changes', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = await hydratedAdd(c);
+      controller.selectCurrency(_eur);
+      controller.appendDigit(5);
+
+      controller.selectMemoSuggestion((memo: 'Sushi', account: _accountJpy));
+
+      final data = read(c);
+      expect(data.selectedAccount, _accountJpy);
+      expect(data.displayCurrency.code, 'EUR');
+      expect(data.amountMinorUnits, 500);
+    });
+
+    test('TC103: no account (archived) fills only the memo', () async {
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = await hydratedAdd(c);
+
+      controller.selectMemoSuggestion((memo: 'Stock', account: null));
+
+      final data = read(c);
+      expect(data.memo, 'Stock');
+      expect(data.selectedAccount, _account);
+    });
+
+    test(
+      'TC104: re-picking the current memo still switches the account',
+      () async {
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = await hydratedAdd(c);
+        controller.setMemo('Stock');
+
+        controller.selectMemoSuggestion((
+          memo: 'Stock',
+          account: _accountInvest,
+        ));
+
+        expect(read(c).selectedAccount, _accountInvest);
+      },
+    );
+
+    test('TC105: re-picking the current memo and account keeps an edit '
+        'form clean', () async {
+      when(() => txRepo.getById(99))
+          .thenAnswer((_) async => _persistedTx(memo: 'Stock'));
+      final c = makeContainer();
+      addTearDown(c.dispose);
+      final controller = c.read(transactionFormControllerProvider.notifier);
+      await controller.hydrateForEdit(99);
+
+      controller.selectMemoSuggestion((memo: 'Stock', account: _account));
+
+      expect(read(c).isDirty, isFalse);
     });
   });
 

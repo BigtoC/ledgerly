@@ -27,7 +27,7 @@ Future<void> _seedMinimal(AppDatabase db) async {
   await db.customStatement(
     'INSERT INTO accounts (id, account_type_id, name, currency, '
     'opening_balance_minor_units, sort_order, is_archived) VALUES '
-    "(1, 1, 'Cash', 'USD', 0, 1, 0)",
+    "(1, 1, 'Cash', 'USD', 0, 1, 0), (2, 1, 'Investment', 'USD', 0, 2, 0)",
   );
 }
 
@@ -37,6 +37,7 @@ Future<void> _insertTx({
   required DateTime date,
   String? memo,
   int categoryId = 1,
+  int accountId = 1,
   DateTime? updatedAt,
 }) {
   // Drift stores DateTime as integer Unix seconds (default mode).
@@ -47,10 +48,11 @@ Future<void> _insertTx({
   return db.customStatement(
     'INSERT INTO transactions (uuid, id, amount_minor_units, currency, '
     'category_id, account_id, date, memo, created_at, updated_at) '
-    "VALUES (hex(randomblob(16)), ?, 1000, 'USD', ?, 1, ?, ?, ?, ?)",
+    "VALUES (hex(randomblob(16)), ?, 1000, 'USD', ?, ?, ?, ?, ?, ?)",
     <Object?>[
       id,
       categoryId,
+      accountId,
       date.millisecondsSinceEpoch ~/ 1000,
       memo,
       epoch,
@@ -58,6 +60,17 @@ Future<void> _insertTx({
     ],
   );
 }
+
+/// The memo text of each suggestion, in order.
+Future<List<String>> _memos(
+  TransactionRepository repo,
+  int categoryId, {
+  int? limit,
+}) async => [
+  for (final s
+      in await repo.watchRecentMemosForCategory(categoryId, limit: limit).first)
+    s.memo,
+];
 
 void main() {
   late AppDatabase db;
@@ -81,7 +94,7 @@ void main() {
     // Old 'A' reused most recently → 'A' moves to the front, once.
     await _insertTx(db: db, id: 4, date: DateTime.utc(2026, 5, 4), memo: 'A');
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, ['A', 'B', 'C']);
   });
@@ -91,7 +104,7 @@ void main() {
     await _insertTx(db: db, id: 1, date: day, memo: 'first');
     await _insertTx(db: db, id: 2, date: day, memo: 'second');
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, ['second', 'first']);
   });
@@ -121,7 +134,7 @@ void main() {
       memo: 'Lunch',
     );
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, ['Rent', 'Lunch', 'Gift']);
   });
@@ -139,7 +152,7 @@ void main() {
       memo: 'Lunch',
     );
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, ['Coffee', 'Lunch']);
   });
@@ -150,7 +163,7 @@ void main() {
     await _insertTx(db: db, id: 3, date: DateTime.utc(2026, 5, 3), memo: '');
     await _insertTx(db: db, id: 4, date: DateTime.utc(2026, 5, 4), memo: '  ');
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, ['ok']);
   });
@@ -172,7 +185,7 @@ void main() {
     );
     await _insertTx(db: db, id: 3, date: DateTime.utc(2026, 5, 3), memo: '　\t');
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, ['Lunch']);
   });
@@ -192,10 +205,8 @@ void main() {
       categoryId: 2,
     );
 
-    expect(await repo.watchRecentMemosForCategory(1, limit: 10).first, [
-      'groceries',
-    ]);
-    expect(await repo.watchRecentMemosForCategory(2, limit: 10).first, ['bus']);
+    expect(await _memos(repo, 1, limit: 10), ['groceries']);
+    expect(await _memos(repo, 2, limit: 10), ['bus']);
   });
 
   test('caps the result at limit, keeping the most recent', () async {
@@ -208,7 +219,7 @@ void main() {
       );
     }
 
-    final memos = await repo.watchRecentMemosForCategory(1, limit: 10).first;
+    final memos = await _memos(repo, 1, limit: 10);
 
     expect(memos, hasLength(10));
     expect(memos.first, 'memo 12');
@@ -225,11 +236,62 @@ void main() {
       );
     }
 
-    final memos = await repo.watchRecentMemosForCategory(1).first;
+    final memos = await _memos(repo, 1);
 
     expect(memos, hasLength(12));
     expect(memos.first, 'memo 12');
     expect(memos.last, 'memo 1');
+  });
+
+  test('carries the account of the memo\'s most recently saved row', () async {
+    await _insertTx(
+      db: db,
+      id: 1,
+      date: DateTime.utc(2026, 5, 1),
+      memo: 'Stock',
+    );
+    await _insertTx(
+      db: db,
+      id: 2,
+      date: DateTime.utc(2026, 5, 2),
+      memo: 'Stock',
+      accountId: 2,
+    );
+    await _insertTx(db: db, id: 3, date: DateTime.utc(2026, 5, 3), memo: 'Gum');
+
+    final suggestions = await repo
+        .watchRecentMemosForCategory(1, limit: 10)
+        .first;
+
+    expect(suggestions, [
+      (memo: 'Gum', accountId: 1),
+      (memo: 'Stock', accountId: 2),
+    ]);
+  });
+
+  test('an older-dated row saved later decides the account, even with a '
+      'lower id', () async {
+    // Dated earlier and inserted first, but edited after row 2 was saved.
+    await _insertTx(
+      db: db,
+      id: 1,
+      date: DateTime.utc(2026, 4, 1),
+      updatedAt: DateTime.utc(2026, 5, 3),
+      memo: 'Stock',
+    );
+    await _insertTx(
+      db: db,
+      id: 2,
+      date: DateTime.utc(2026, 5, 2),
+      memo: 'Stock',
+      accountId: 2,
+    );
+
+    final suggestions = await repo
+        .watchRecentMemosForCategory(1, limit: 10)
+        .first;
+
+    expect(suggestions, [(memo: 'Stock', accountId: 1)]);
   });
 
   test('re-emits when a transaction is written', () async {
@@ -237,6 +299,7 @@ void main() {
 
     final emissions = repo
         .watchRecentMemosForCategory(1, limit: 10)
+        .map((suggestions) => [for (final s in suggestions) s.memo])
         .take(2)
         .toList();
     await pumpEventQueue();

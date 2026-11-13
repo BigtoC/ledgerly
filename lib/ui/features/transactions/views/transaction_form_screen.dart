@@ -315,7 +315,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     if (state.selectedCategory case final category?)
                       MemoSuggestions(
                         categoryId: category.id,
-                        onSelected: controller.setMemo,
+                        onSelected: controller.selectMemoSuggestion,
                       ),
                     // Shopping-list inline action rows — shown below MemoField.
                     if (isShoppingListDraftMode)

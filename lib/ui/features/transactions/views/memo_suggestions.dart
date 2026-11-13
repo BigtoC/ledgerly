@@ -1,5 +1,7 @@
 // `MemoSuggestions` — chips under the MemoField listing memos recently
-// used in the selected category. Tapping a chip fills the memo. When the
+// used in the selected category. Tapping a chip hands over the memo and
+// its account; the form fills the memo and switches to that account
+// (issue #152). The chips show only the memo text. When the
 // category has more than `memoSuggestionLimit` memos, a trailing "More"
 // chip opens a sheet listing all of them. Renders nothing while loading,
 // on error, or when the category has no memos.
@@ -14,13 +16,13 @@ import 'memo_picker_sheet.dart';
 class const MemoSuggestions({
   super.key,
   required final int categoryId,
-  required final ValueChanged<String> onSelected,
+  required final ValueChanged<MemoSuggestion> onSelected,
 }) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final memos =
         ref.watch(txMemoSuggestionsProvider(categoryId)).value ??
-        const <String>[];
+        const <MemoSuggestion>[];
     if (memos.isEmpty) return const SizedBox.shrink();
     final hasMore = memos.length > memoSuggestionLimit;
     return Padding(
@@ -30,24 +32,24 @@ class const MemoSuggestions({
         child: Row(
           spacing: 8,
           children: [
-            for (final memo in memos.take(memoSuggestionLimit))
+            for (final suggestion in memos.take(memoSuggestionLimit))
               ActionChip(
                 label: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 200),
                   child: Text(
-                    memo,
+                    suggestion.memo,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                onPressed: () => onSelected(memo),
+                onPressed: () => onSelected(suggestion),
               ),
             if (hasMore)
               ActionChip(
                 label: Text(AppLocalizations.of(context).txMemoSuggestionsMore),
                 onPressed: () async {
-                  final memo = await showMemoPickerSheet(context, categoryId);
-                  if (memo != null) onSelected(memo);
+                  final picked = await showMemoPickerSheet(context, categoryId);
+                  if (picked != null) onSelected(picked);
                 },
               ),
           ],

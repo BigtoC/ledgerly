@@ -1,11 +1,14 @@
 // Widget tests for `MemoSuggestions` and its interplay with `MemoField`:
 // chips render the provider's memos, render nothing when empty, and a
-// tap fills the memo with the cursor placed at the end.
+// tap fills the memo with the cursor placed at the end and hands over
+// the memo's account (issue #152).
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ledgerly/core/l10n/app_localizations_delegates.dart';
+import 'package:ledgerly/domain/models/account.dart';
+import 'package:ledgerly/domain/models/currency.dart';
 import 'package:ledgerly/l10n/app_localizations.dart';
 import 'package:ledgerly/ui/features/transactions/view_models/transactions_providers.dart';
 import 'package:ledgerly/ui/features/transactions/views/memo_field.dart';
@@ -20,6 +23,16 @@ class _Host extends StatefulWidget {
   State<_Host> createState() => _HostState();
 }
 
+/// The account handed over by the last pick.
+Account? pickedAccount;
+
+const _invest = Account(
+  id: 3,
+  name: 'Investment',
+  accountTypeId: 1,
+  currency: Currency(code: 'USD', decimals: 2),
+);
+
 class _HostState extends State<_Host> {
   String memo = '';
 
@@ -33,18 +46,27 @@ class _HostState extends State<_Host> {
         ),
         MemoSuggestions(
           categoryId: 7,
-          onSelected: (v) => setState(() => memo = v),
+          onSelected: (v) => setState(() {
+            memo = v.memo;
+            pickedAccount = v.account;
+          }),
         ),
       ],
     );
   }
 }
 
+/// Each memo is suggested with the Investment account.
 Widget _mount(List<String> memos, {List<String> allMemos = const []}) {
+  List<MemoSuggestion> suggest(List<String> memos) => [
+    for (final m in memos) (memo: m, account: _invest),
+  ];
   return ProviderScope(
     overrides: [
-      txMemoSuggestionsProvider(7).overrideWith((ref) => Stream.value(memos)),
-      txAllMemosProvider(7).overrideWith((ref) => Stream.value(allMemos)),
+      txMemoSuggestionsProvider(7)
+          .overrideWith((ref) => Stream.value(suggest(memos))),
+      txAllMemosProvider(7)
+          .overrideWith((ref) => Stream.value(suggest(allMemos))),
     ],
     child: const MaterialApp(
       localizationsDelegates: appLocalizationsDelegates,
@@ -55,6 +77,8 @@ Widget _mount(List<String> memos, {List<String> allMemos = const []}) {
 }
 
 void main() {
+  setUp(() => pickedAccount = null);
+
   testWidgets('renders one chip per memo, in order', (tester) async {
     await tester.pumpWidget(_mount(const ['Lunch', 'Coffee']));
     await tester.pump();
@@ -91,6 +115,7 @@ void main() {
       field.controller!.selection,
       const TextSelection.collapsed(offset: 5),
     );
+    expect(pickedAccount, _invest);
   });
 
   testWidgets('long memos stay on one line at 2x text scale', (tester) async {
@@ -196,6 +221,7 @@ void main() {
       expect(find.byType(BottomSheet), findsNothing);
       final field = tester.widget<TextField>(find.byType(TextField));
       expect(field.controller!.text, 'oldest');
+      expect(pickedAccount, _invest);
     });
   });
 }
