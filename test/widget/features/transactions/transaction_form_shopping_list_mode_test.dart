@@ -15,6 +15,8 @@
 //   - AddShoppingListDraftMode (issue #147): both saves save a draft and
 //     pop, are disabled until canSaveDraft, the inline action is hidden and
 //     the picker lists expense categories only
+//   - A memo suggestion picked in AddShoppingListDraftMode switches the
+//     draft's account (issue #152)
 
 import 'dart:async';
 
@@ -908,6 +910,50 @@ void main() {
 
       expect(find.text('Food'), findsOneWidget);
       expect(find.text('Salary'), findsNothing);
+    });
+
+    testWidgets('TFSLN05: a memo suggestion saves the draft to its account '
+        '(issue #152)', (tester) async {
+      const invest = Account(
+        id: 3,
+        name: 'Investment',
+        accountTypeId: 1,
+        currency: _usd,
+      );
+      when(() => accountRepo.watchAll(includeArchived: false))
+          .thenAnswer((_) => Stream.value(const [_account, invest]));
+      when(
+        () =>
+            txRepo.watchRecentMemosForCategory(10, limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value(const [(memo: 'Stock', accountId: 3)]));
+      when(
+        () => slRepo.insert(
+          categoryId: any(named: 'categoryId'),
+          accountId: any(named: 'accountId'),
+          memo: any(named: 'memo'),
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).thenAnswer((_) async => _draft());
+      await openForm(tester);
+      await pickFood(tester);
+
+      await tester.tap(find.widgetWithText(ActionChip, 'Stock'));
+      await tester.pumpAndSettle();
+      await tester.tap(appBarSave);
+      await tester.pumpAndSettle();
+
+      verify(
+        () => slRepo.insert(
+          categoryId: _expenseCategory.id,
+          accountId: invest.id,
+          memo: 'Stock',
+          draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+          draftCurrencyCode: any(named: 'draftCurrencyCode'),
+          draftDate: any(named: 'draftDate'),
+        ),
+      ).called(1);
     });
   });
 }

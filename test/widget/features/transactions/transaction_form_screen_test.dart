@@ -14,6 +14,8 @@
 //     category check shows the generic error with no uncaught error.
 //   - Closing the form while it is still loading leaves no uncaught
 //     error.
+//   - Tapping a memo suggestion switches to the memo's account without a
+//     dialog; an archived account is left alone (issue #152).
 //
 // Repositories mocked via mocktail; the screen is mounted under a
 // minimal GoRouter so the form's `context.pop` calls work.
@@ -90,6 +92,12 @@ const _yenAccount = Account(
   name: 'Yen',
   accountTypeId: 1,
   currency: _jpy,
+);
+const _investAccount = Account(
+  id: 3,
+  name: 'Investment',
+  accountTypeId: 1,
+  currency: _usd,
 );
 
 const _expenseCategory = Category(
@@ -1280,6 +1288,97 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  group('memo suggestion switches the account (issue #152)', () {
+    /// Opens the Add form with Food picked and a "Stock" suggestion last
+    /// saved with account [accountId].
+    @Dependencies([TransactionFormController, categoriesByType])
+    Future<void> pumpWithStockSuggestion(
+      WidgetTester tester, {
+      required int accountId,
+    }) async {
+      when(() => accountRepo.watchAll(includeArchived: false)).thenAnswer(
+        (_) => Stream.value(const [_account, _yenAccount, _investAccount]),
+      );
+      when(
+        () =>
+            txRepo.watchRecentMemosForCategory(10, limit: any(named: 'limit')),
+      ).thenAnswer(
+        (_) => Stream.value([(memo: 'Stock', accountId: accountId)]),
+      );
+      await tester.pumpWidget(
+        mountAdd(
+          extraOverrides: [
+            categoriesByTypeProvider(CategoryType.expense)
+                .overrideWith((ref) => Stream.value(const [_expenseCategory])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Select a category'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Food'));
+      await tester.pumpAndSettle();
+    }
+
+    String shownAccount(WidgetTester tester) => tester
+        .widget<AccountSelectorTile>(find.byType(AccountSelectorTile))
+        .account!
+        .name;
+
+    testWidgets('WS152a: tapping the chip fills the memo and switches the '
+        'account', (tester) async {
+      await pumpWithStockSuggestion(tester, accountId: _investAccount.id);
+      expect(shownAccount(tester), 'Cash');
+
+      await tester.tap(find.widgetWithText(ActionChip, 'Stock'));
+      await tester.pumpAndSettle();
+
+      expect(shownAccount(tester), 'Investment');
+      expect(
+        find.descendant(
+          of: find.byType(TextField),
+          matching: find.text('Stock'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('WS152b: a different currency switches without a dialog and '
+        'clears the amount', (tester) async {
+      await pumpWithStockSuggestion(tester, accountId: _yenAccount.id);
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ActionChip, 'Stock'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(shownAccount(tester), 'Yen');
+      final display = tester.widget<AmountDisplay>(find.byType(AmountDisplay));
+      expect(display.currency, _jpy);
+      expect(display.keypad.amountMinorUnits, 0);
+    });
+
+    testWidgets('WS152c: an archived account leaves the account alone', (
+      tester,
+    ) async {
+      // Account 4 is not among the active accounts.
+      await pumpWithStockSuggestion(tester, accountId: 4);
+
+      await tester.tap(find.widgetWithText(ActionChip, 'Stock'));
+      await tester.pumpAndSettle();
+
+      expect(shownAccount(tester), 'Cash');
+      expect(
+        find.descendant(
+          of: find.byType(TextField),
+          matching: find.text('Stock'),
+        ),
+        findsOneWidget,
+      );
+    });
+  });
 
   // Issue #100 — on a normal phone the form fits above the keypad
   // without scrolling: two selector tiles per row and a shorter amount

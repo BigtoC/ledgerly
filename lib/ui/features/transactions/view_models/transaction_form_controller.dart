@@ -47,6 +47,7 @@ import '../../categories/view_models/categories_controller.dart';
 import 'amount_formula.dart';
 import 'keypad_state.dart';
 import 'transaction_form_state.dart';
+import 'transactions_providers.dart';
 
 part 'transaction_form_controller.g.dart';
 
@@ -474,6 +475,22 @@ class TransactionFormController extends _$TransactionFormController {
     if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
     if (s.memo == memo) return;
     state = s.copyWith(memo: memo, isDirty: true);
+  }
+
+  /// Picks a memo suggestion (issue #152): fills the memo and switches to
+  /// the account the memo was last saved with. A currency change follows
+  /// the account and clears the amount without asking. A null account
+  /// (archived) leaves the account alone. Changes nothing while a
+  /// submission is in flight, so the memo and account move together.
+  void selectMemoSuggestion(MemoSuggestion suggestion) {
+    final s = state;
+    if (s is! TransactionFormData || s.isSaving || s.isDeleting) return;
+    if (s.submissionAction != TransactionFormSubmissionAction.none) return;
+    setMemo(suggestion.memo);
+    final account = suggestion.account;
+    if (account != null && account.id != s.selectedAccount.id) {
+      selectAccount(account, clearAmountOnCurrencyChange: true);
+    }
   }
 
   // ---------- Save / delete ----------

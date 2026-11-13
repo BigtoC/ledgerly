@@ -19,6 +19,8 @@
 //     normally and stops reading
 //   - canSaveDraft / canConvertDraft rules
 //   - submissionAction serializes in-flight state (double-tap protection)
+//   - A memo suggestion picked while a submission is in flight changes
+//     neither the memo nor the account (issue #152)
 //
 // Repositories mocked via mocktail; no live DB.
 
@@ -864,6 +866,46 @@ void main() {
 
         s = c.read(transactionFormControllerProvider) as TransactionFormData;
         expect(s.submissionAction, TransactionFormSubmissionAction.none);
+      });
+
+      test('a memo suggestion picked during in-flight changes neither the '
+          'memo nor the account', () async {
+        final completer = Completer<ShoppingListItem>();
+        when(
+          () => slRepo.insert(
+            categoryId: any(named: 'categoryId'),
+            accountId: any(named: 'accountId'),
+            memo: any(named: 'memo'),
+            draftAmountMinorUnits: any(named: 'draftAmountMinorUnits'),
+            draftCurrencyCode: any(named: 'draftCurrencyCode'),
+            draftDate: any(named: 'draftDate'),
+          ),
+        ).thenAnswer((_) => completer.future);
+
+        final c = makeContainer();
+        addTearDown(c.dispose);
+        final controller = c.read(transactionFormControllerProvider.notifier);
+        await controller.hydrateForAdd();
+        controller.selectCategory(_expenseCategory);
+        final pending = controller.saveDraft();
+
+        controller.selectMemoSuggestion((
+          memo: 'Stock',
+          account: const Account(
+            id: 6,
+            name: 'Investment',
+            accountTypeId: 1,
+            currency: _usd,
+          ),
+        ));
+
+        final s =
+            c.read(transactionFormControllerProvider) as TransactionFormData;
+        expect(s.memo, isNot('Stock'));
+        expect(s.selectedAccount, _account);
+
+        completer.complete(_draft());
+        await pending;
       });
     },
   );
