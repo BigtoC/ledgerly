@@ -45,28 +45,46 @@ final txAccountLookupProvider =
 /// LIMIT, so 6/8/10 benchmark the same.
 const memoSuggestionLimit = 10;
 
+/// A memo suggestion and the account that the memo's most recently
+/// saved transaction used. [account] is null when that account is
+/// archived; picking the memo then leaves the form's account alone.
+typedef MemoSuggestion = ({String memo, Account? account});
+
+/// [TransactionRepository.watchRecentMemosForCategory] with each account
+/// id resolved against the active accounts.
+@Dependencies([transactionRepository])
+Stream<List<MemoSuggestion>> _memoSuggestions(
+  Ref ref,
+  int categoryId, {
+  int? limit,
+}) async* {
+  final active = {
+    for (final a in await ref.watch(txActiveAccountsProvider.future)) a.id: a,
+  };
+  yield* ref
+      .watch(transactionRepositoryProvider)
+      .watchRecentMemosForCategory(categoryId, limit: limit)
+      .map(
+        (rows) => [
+          for (final r in rows) (memo: r.memo, account: active[r.accountId]),
+        ],
+      );
+}
+
 /// Recently used distinct memos for a category, newest first. Drives the
 /// suggestion chips under the transaction form's Memo field. Fetches one
 /// past [memoSuggestionLimit] so the chips know to offer "More".
 final txMemoSuggestionsProvider = StreamProvider.autoDispose
-    .family<List<String>, int>((ref, categoryId) {
-      final repo = ref.watch(transactionRepositoryProvider);
-      return repo
-          .watchRecentMemosForCategory(
-            categoryId,
-            limit: memoSuggestionLimit + 1,
-          )
-          .map((rows) => [for (final r in rows) r.memo]);
-    }, dependencies: [transactionRepositoryProvider]);
+    .family<List<MemoSuggestion>, int>(
+      (ref, categoryId) =>
+          _memoSuggestions(ref, categoryId, limit: memoSuggestionLimit + 1),
+      dependencies: [transactionRepositoryProvider, txActiveAccountsProvider],
+    );
 
 /// Every distinct memo used in a category, newest first. Backs the
 /// "More" sheet opened from the memo suggestion chips.
-final txAllMemosProvider = StreamProvider.autoDispose.family<List<String>, int>(
-  (ref, categoryId) {
-    final repo = ref.watch(transactionRepositoryProvider);
-    return repo
-        .watchRecentMemosForCategory(categoryId)
-        .map((rows) => [for (final r in rows) r.memo]);
-  },
-  dependencies: [transactionRepositoryProvider],
-);
+final txAllMemosProvider = StreamProvider.autoDispose
+    .family<List<MemoSuggestion>, int>(
+      (ref, categoryId) => _memoSuggestions(ref, categoryId),
+      dependencies: [transactionRepositoryProvider, txActiveAccountsProvider],
+    );
