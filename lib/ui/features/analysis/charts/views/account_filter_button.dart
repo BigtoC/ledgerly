@@ -6,7 +6,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/analysis_colors.dart';
-import 'dimension_toggle.dart' show RedirectToCenter;
+import '../../../../core/widgets/redirect_to_center.dart';
 
 /// A 44-high hit target holding a 32-high pill: the filtered account's
 /// name (or "All accounts") and a chevron. Opens the account sheet through

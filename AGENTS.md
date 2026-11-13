@@ -18,7 +18,7 @@ PR #135 removed 2,831 lines (1,614 hand-written `lib/` lines) without changing b
 
 - **A second copy.** Before writing a helper, mapper, query, dialog, sheet or snackbar, search for an existing one. Look in:
   - `lib/core/utils/` (`MoneyFormatter`, `DateHelpers`)
-  - `lib/ui/core/widgets/` (`showAdaptiveSheet`, `showConfirmDialog`, `showUndoSnackBar`)
+  - `lib/ui/core/widgets/` (`showAdaptiveSheet`, `showConfirmDialog`, `showUndoSnackBar`, `RedirectToCenter`)
   - the repositories (`currencyFromRow`, `RepositoryException`)
   - `test/support/` (`test_app.dart`, `textScaleBuilder`)
 

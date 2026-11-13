@@ -235,6 +235,7 @@ lib/
         adaptive_sheet.dart  # 600dp picker switch (bottom sheet ↔ constrained Dialog)
         confirm_dialog.dart  # Cancel / confirm AlertDialog resolving to bool
         undo_snack_bar.dart  # clear-then-show Undo snackbar for the kUndoWindow
+        redirect_to_center.dart  # sends a press on a child's margin to its tap target
     features/
       splash/
         view_models/

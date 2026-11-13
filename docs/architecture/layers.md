@@ -22,7 +22,7 @@ lib/
 │   ├── models/     # Freezed models
 │   └── use_cases/
 ├── ui/
-│   ├── core/       # theme/, widgets/ (adaptive_shell.dart, adaptive_sheet.dart, confirm_dialog.dart, undo_snack_bar.dart)
+│   ├── core/       # theme/, widgets/ (adaptive_shell.dart, adaptive_sheet.dart, confirm_dialog.dart, undo_snack_bar.dart, redirect_to_center.dart)
 │   └── features/<feature>/{view_models,views}/
 └── l10n/           # generated
 ```
