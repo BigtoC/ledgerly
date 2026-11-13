@@ -106,9 +106,11 @@ abstract class TransactionRepository {
 
   /// Up to [limit] distinct memos (trimmed) previously used in
   /// [categoryId], most recently saved first (by `updatedAt`, not the
-  /// transaction date). NULL and whitespace-only memos are excluded. Feeds the transaction form's memo suggestions.
+  /// transaction date). NULL and whitespace-only memos are excluded. Each
+  /// memo carries the account of its most recently saved row. Feeds the
+  /// transaction form's memo suggestions.
   /// A null [limit] returns every distinct memo.
-  Stream<List<String>> watchRecentMemosForCategory(
+  Stream<List<({String memo, int accountId})>> watchRecentMemosForCategory(
     int categoryId, {
     int? limit,
   });
@@ -323,7 +325,7 @@ final class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
-  Stream<List<String>> watchRecentMemosForCategory(
+  Stream<List<({String memo, int accountId})>> watchRecentMemosForCategory(
     int categoryId, {
     int? limit,
   }) {

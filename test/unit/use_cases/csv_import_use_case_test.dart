@@ -525,7 +525,7 @@ void main() {
             limit: 1,
           )
           .first;
-      expect(memos, [foodRows.first.memo!.trim()]);
+      expect(memos.map((s) => s.memo), [foodRows.first.memo!.trim()]);
     });
 
     test('re-importing after a commit finds 105 duplicates even when the '

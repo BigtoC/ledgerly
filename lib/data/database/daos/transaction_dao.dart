@@ -82,8 +82,9 @@ class TransactionDao(super.db)
   /// when each was last saved (`updated_at DESC`, then `id DESC`), not by
   /// the transaction's `date`: a backfilled entry typed just now ranks
   /// first and a future-dated one does not stay pinned. NULL and blank
-  /// memos are excluded. Backs the memo suggestions under the
-  /// transaction form's Memo field.
+  /// memos are excluded. Each memo carries the `account_id` of that same
+  /// latest row. Backs the memo suggestions under the transaction form's
+  /// Memo field.
   ///
   /// The window function ranks each memo by its own latest row; a plain
   /// `MAX(updated_at), MAX(id)` would take the id tiebreak from a
@@ -93,18 +94,19 @@ class TransactionDao(super.db)
   /// One-argument `TRIM` strips only U+0020, so the memo is trimmed with
   /// the same whitespace set as Dart's `String.trim` (tabs, NBSP, the
   /// CJK ideographic space U+3000, ...).
-  Stream<List<String>> watchRecentMemosByCategory(
+  Stream<List<({String memo, int accountId})>> watchRecentMemosByCategory(
     int categoryId, {
     int? limit,
   }) {
     final query = customSelect(
-      'SELECT m FROM ('
-      'SELECT m, updated_at, id, ROW_NUMBER() OVER ('
+      'SELECT m, account_id FROM ('
+      'SELECT m, account_id, updated_at, id, ROW_NUMBER() OVER ('
       'PARTITION BY m ORDER BY updated_at DESC, id DESC) AS rn '
       'FROM ('
       'SELECT TRIM(memo, char(9, 10, 11, 12, 13, 32, 133, 160, 5760, '
       '8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, '
-      '8232, 8233, 8239, 8287, 12288, 65279)) AS m, updated_at, id '
+      '8232, 8233, 8239, 8287, 12288, 65279)) AS m, account_id, updated_at, '
+      'id '
       'FROM transactions '
       'WHERE category_id = ? AND memo IS NOT NULL'
       ") WHERE m <> ''"
@@ -116,7 +118,10 @@ class TransactionDao(super.db)
       readsFrom: {transactions},
     );
     return query.watch().map(
-      (rows) => rows.map((r) => r.read<String>('m')).toList(growable: false),
+      (rows) => [
+        for (final r in rows)
+          (memo: r.read<String>('m'), accountId: r.read<int>('account_id')),
+      ],
     );
   }
 

@@ -1344,7 +1344,12 @@ void main() {
       when(
         () =>
             txRepo.watchRecentMemosForCategory(10, limit: any(named: 'limit')),
-      ).thenAnswer((_) => Stream.value(const ['lunch', 'coffee']));
+      ).thenAnswer(
+        (_) => Stream.value(const [
+          (memo: 'lunch', accountId: 1),
+          (memo: 'coffee', accountId: 1),
+        ]),
+      );
       await tester.pumpWidget(
         mountAdd(
           textScale: textScale,
@@ -1457,7 +1462,12 @@ void main() {
       when(
         () =>
             txRepo.watchRecentMemosForCategory(10, limit: any(named: 'limit')),
-      ).thenAnswer((_) => Stream.value(const ['lunch', 'coffee']));
+      ).thenAnswer(
+        (_) => Stream.value(const [
+          (memo: 'lunch', accountId: 1),
+          (memo: 'coffee', accountId: 1),
+        ]),
+      );
       when(() => txRepo.getById(99))
           .thenAnswer((_) async => _persistedTx(memo: 'lunch'));
       await tester.pumpWidget(mountEdit(99));

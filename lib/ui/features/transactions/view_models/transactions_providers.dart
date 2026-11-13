@@ -51,10 +51,12 @@ const memoSuggestionLimit = 10;
 final txMemoSuggestionsProvider = StreamProvider.autoDispose
     .family<List<String>, int>((ref, categoryId) {
       final repo = ref.watch(transactionRepositoryProvider);
-      return repo.watchRecentMemosForCategory(
-        categoryId,
-        limit: memoSuggestionLimit + 1,
-      );
+      return repo
+          .watchRecentMemosForCategory(
+            categoryId,
+            limit: memoSuggestionLimit + 1,
+          )
+          .map((rows) => [for (final r in rows) r.memo]);
     }, dependencies: [transactionRepositoryProvider]);
 
 /// Every distinct memo used in a category, newest first. Backs the
@@ -62,7 +64,9 @@ final txMemoSuggestionsProvider = StreamProvider.autoDispose
 final txAllMemosProvider = StreamProvider.autoDispose.family<List<String>, int>(
   (ref, categoryId) {
     final repo = ref.watch(transactionRepositoryProvider);
-    return repo.watchRecentMemosForCategory(categoryId);
+    return repo
+        .watchRecentMemosForCategory(categoryId)
+        .map((rows) => [for (final r in rows) r.memo]);
   },
   dependencies: [transactionRepositoryProvider],
 );
