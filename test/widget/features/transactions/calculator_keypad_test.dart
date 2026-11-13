@@ -14,6 +14,7 @@
 //   - Old 00 / C keys are gone.
 //   - Text scale clamping at 1.5×.
 //   - Key taps fire a light haptic; the disabled decimal key does not.
+//   - A tap in the gap between keys enters the nearer key (issue #159).
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -492,5 +493,47 @@ void main() {
         }
       });
     }
+  });
+
+  group('fast taps (issue #159)', () {
+    testWidgets('WK41: a tap just off a key\'s face still enters that key', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+      final face = tester.getRect(
+        find
+            .ancestor(of: find.text('5'), matching: find.byType(Material))
+            .first,
+      );
+
+      // The 8dp gaps between key faces: 3dp into each belongs to this key.
+      await tester.tapAt(face.centerLeft - const Offset(3, 0));
+      await tester.tapAt(face.centerRight + const Offset(3, 0));
+      await tester.tapAt(face.topCenter - const Offset(0, 3));
+      await tester.tapAt(face.bottomCenter + const Offset(0, 3));
+
+      expect(digits, [5, 5, 5, 5]);
+    });
+
+    testWidgets('WK45: a tap on a clipped corner of an icon key enters it', (
+      tester,
+    ) async {
+      var backspaces = 0;
+      await tester.pumpWidget(_wrap(_keypad(onBackspace: () => backspaces++)));
+      final face = tester.getRect(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.backspace_outlined),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+
+      await tester.tapAt(face.topLeft + const Offset(1, 1));
+      await tester.tapAt(face.bottomRight - const Offset(1, 1));
+
+      expect(backspaces, 2);
+    });
   });
 }

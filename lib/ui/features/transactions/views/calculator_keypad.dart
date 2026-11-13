@@ -19,15 +19,17 @@
 //     transaction form keeps its AppBar Save too, so the thumb that typed
 //     the amount can save without reaching the top of the screen.
 //   - Five rows share the height four rows of 48–56dp keys took before
-//     issue #144, so keys are about 37–43dp: below the 48dp tap target
-//     (PRD → Accessibility lists the exception). Given less height than
-//     [minHeight], they shrink further (issue #100).
+//     issue #144, so key faces are about 37–43dp tall. A key takes presses
+//     over its whole cell, the 4dp around its face included, which is about
+//     45–51dp tall (PRD → Accessibility). Given less height than
+//     [minHeight], the keys shrink further (issue #100).
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/redirect_to_center.dart';
 import '../view_models/keypad_state.dart';
 
 class const CalculatorKeypad({
@@ -143,14 +145,21 @@ class const CalculatorKeypad({
   static const double _maxKeyHeight = 4 * (56 + 8) / 5 - 8;
 
   Widget _row(List<Widget> children, double keyHeight) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: SizedBox(
-        height: keyHeight,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [for (final c in children) Expanded(child: c)],
-        ),
+    return SizedBox(
+      height: keyHeight + 8,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final c in children)
+            Expanded(
+              // A press in the 4dp around a key's face, or on the face's
+              // clipped corners, goes to the key, so none falls between
+              // two keys (issue #159).
+              child: RedirectToCenter(
+                child: Padding(padding: const EdgeInsets.all(4), child: c),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -212,14 +221,11 @@ class const _TextKey({
         child: ExcludeSemantics(child: child),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Material(
-        color: _keyColor(colors, onTap, accent: accent),
-        borderRadius: BorderRadius.circular(12),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(onTap: _withHaptic(onTap), child: child),
-      ),
+    return Material(
+      color: _keyColor(colors, onTap, accent: accent),
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(onTap: _withHaptic(onTap), child: child),
     );
   }
 }
@@ -236,7 +242,7 @@ class const _IconKey({
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    final key = Semantics(
+    return Semantics(
       button: true,
       enabled: onTap != null,
       onLongPressHint: onLongPress == null ? null : l10n.txKeypadClear,
@@ -247,23 +253,24 @@ class const _IconKey({
         color: _keyColor(colors, onTap),
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _withHaptic(onTap),
-          onLongPress: onLongPress,
-          child: Center(
-            child: Icon(
-              icon,
-              color: onTap == null
-                  ? colors.onSurface.withValues(alpha: 0.4)
-                  : null,
+        // Inside the Material's clip, so that a press on a clipped corner
+        // misses the tooltip too and goes to the key's centre.
+        child: Tooltip(
+          message: tooltip,
+          child: InkWell(
+            onTap: _withHaptic(onTap),
+            onLongPress: onLongPress,
+            child: Center(
+              child: Icon(
+                icon,
+                color: onTap == null
+                    ? colors.onSurface.withValues(alpha: 0.4)
+                    : null,
+              ),
             ),
           ),
         ),
       ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Tooltip(message: tooltip, child: key),
     );
   }
 }
