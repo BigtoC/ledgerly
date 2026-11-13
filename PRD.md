@@ -235,6 +235,7 @@ lib/
         adaptive_sheet.dart  # 600dp picker switch (bottom sheet ↔ constrained Dialog)
         confirm_dialog.dart  # Cancel / confirm AlertDialog resolving to bool
         undo_snack_bar.dart  # clear-then-show Undo snackbar for the kUndoWindow
+        redirect_to_center.dart  # sends a press on a child's margin to its tap target
     features/
       splash/
         view_models/
@@ -1160,7 +1161,8 @@ Save   0    .    =
 - **AC** clears the amount, as long-pressing ⌫ does. **%** turns the operand being typed into a percent (see `amount_formula` under the data model). Digits and `.` after `%` are ignored; ⌫ removes the `%`.
 - **=** finishes the calculation. It is enabled only while an expression is pending. The amount display has no `=` of its own.
 - **Save** saves what the page is editing and is disabled while that save isn't allowed. On Add/Edit Transaction it saves the transaction (disabled while `canSave` is false), and the AppBar Save stays. In shopping-list draft edit mode it saves the draft back to the list, as "Save draft" does (disabled while `canSaveDraft` is false); it never converts the draft. In add-draft mode (`/home/shopping-list/new`) it and the AppBar Save add a new draft, under the same rule. On the recurring rule form it saves the rule.
-- Five rows share the height four rows of 48–56dp keys took before the fifth row was added (`CalculatorKeypad.minHeight` is unchanged), so keys are about 37–43dp tall, below the 48dp tap target (see *Accessibility*). Key labels use `titleMedium` and keep the 1.5× text-scale clamp.
+- Five rows share the height four rows of 48–56dp keys took before the fifth row was added (`CalculatorKeypad.minHeight` is unchanged), so key faces are about 37–43dp tall, below the 48dp tap target (see *Accessibility*). Key labels use `titleMedium` and keep the 1.5× text-scale clamp.
+- **Presses** (issue #159). A key takes presses over its whole grid cell: the 4dp around its face and the face's clipped corners go to that key, so no press falls between two keys. Every finger is a tap of its own, so a second finger on a key still held enters it again. A press enters when its finger lifts, or as soon as another finger lands on a key, so keys enter in the order they were pressed; a held Save or AC is entered the same way. A press survives its finger drifting up to 48dp and is cancelled beyond that. A stylus counts as a finger; a mouse keeps the plain `InkWell` tap.
 
 ### Category picker
 
@@ -1210,7 +1212,7 @@ No `try/catch` in widgets. No unhandled `Future` anywhere: a widget either await
 ## Accessibility
 
 - WCAG AA contrast for all text, including rainbow-gradient splash text and category tiles
-- Minimum 48×48dp tap targets for FAB, swipe actions, category tiles. Exception: calculator keypad keys are about 37–43dp tall, because the 5 × 4 grid fits five rows into the height four rows had (issue #144). They are wider than 48dp on a phone. A different fix can follow if they prove too small.
+- Minimum 48×48dp tap targets for FAB, swipe actions, category tiles. Exception: calculator keypad key faces are about 37–43dp tall, because the 5 × 4 grid fits five rows into the height four rows had (issue #144). They are wider than 48dp on a phone, and a key takes presses over its whole cell, about 45–51dp tall (issue #159).
 - `Semantics` labels on icon-only buttons (FAB, delete, undo snackbar action)
 - Dynamic text scaling respected up to 2×; splash day counter uses `AutoSizeText` or clamps at 1.5× to preserve layout
 - `MediaQuery.boldText` respected in list rendering

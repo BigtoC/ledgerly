@@ -14,7 +14,14 @@
 //   - Old 00 / C keys are gone.
 //   - Text scale clamping at 1.5×.
 //   - Key taps fire a light haptic; the disabled decimal key does not.
+//   - Fast taps (issue #159): a second finger on a held key, a tap in the gap
+//     between keys, a tap that drifts, and keys entering in press order.
+//
+// A test that ends right after a key tap pumps `kDoubleTapMinTime` first:
+// each tap starts a 40ms timer inside `MultiTapGestureRecognizer` that nothing
+// can cancel, and a test may not end with a timer pending.
 
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -83,6 +90,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('.'));
     expect(decimalTaps, 1);
+    await tester.pump(kDoubleTapMinTime);
   });
 
   testWidgets('WK02: decimal point is disabled on JPY (decimals = 0)', (
@@ -126,6 +134,7 @@ void main() {
       await tester.tap(find.text('4'));
       expect(keypad.amountMinorUnits, 123);
       expect(keypad.fractionalDigitsEntered, 2);
+      await tester.pump(kDoubleTapMinTime);
     },
   );
 
@@ -152,6 +161,7 @@ void main() {
         CalcOperator.multiply,
         CalcOperator.divide,
       ]);
+      await tester.pump(kDoubleTapMinTime);
     },
   );
 
@@ -165,10 +175,18 @@ void main() {
   testWidgets('WK12: long-pressing backspace triggers clear', (tester) async {
     var clearCount = 0;
 
-    await tester.pumpWidget(_wrap(_keypad(onClear: () => clearCount++)));
+    var backspaceCount = 0;
+    await tester.pumpWidget(
+      _wrap(
+        _keypad(
+          onBackspace: () => backspaceCount++,
+          onClear: () => clearCount++,
+        ),
+      ),
+    );
 
     await tester.longPress(find.byTooltip('Backspace'));
-    expect(clearCount, 1);
+    expect((backspaceCount, clearCount), (0, 1));
   });
 
   testWidgets('WK12b: backspace exposes a custom clear semantics action', (
@@ -227,6 +245,7 @@ void main() {
     await tester.tap(find.byTooltip('Backspace'));
 
     expect(haptics, List.filled(4, 'HapticFeedbackType.lightImpact'));
+    await tester.pump(kDoubleTapMinTime);
   });
 
   testWidgets('WK16: the disabled decimal key fires no haptic', (tester) async {
@@ -366,6 +385,7 @@ void main() {
       }
 
       expect(pressed, ['AC', '%', '=', 'save']);
+      await tester.pump(kDoubleTapMinTime);
     });
 
     testWidgets('WK32: = and Save are disabled without a callback', (
@@ -427,6 +447,7 @@ void main() {
       }
 
       expect(haptics, List.filled(4, 'HapticFeedbackType.lightImpact'));
+      await tester.pump(kDoubleTapMinTime);
     });
 
     testWidgets('WK34: the new keys expose localized semantics labels', (
@@ -492,5 +513,211 @@ void main() {
         }
       });
     }
+  });
+
+  group('fast taps (issue #159)', () {
+    testWidgets('WK40: a second finger on a key still held enters it again', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      final first = await tester.startGesture(tester.getCenter(find.text('0')));
+      final second = await tester.startGesture(
+        tester.getCenter(find.text('0')),
+      );
+      await first.up();
+      await second.up();
+
+      expect(digits, [0, 0]);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK41: a tap just off a key\'s face still enters that key', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+      final face = tester.getRect(
+        find
+            .ancestor(of: find.text('5'), matching: find.byType(Material))
+            .first,
+      );
+
+      // The 8dp gaps between key faces: 3dp into each belongs to this key.
+      await tester.tapAt(face.centerLeft - const Offset(3, 0));
+      await tester.tapAt(face.centerRight + const Offset(3, 0));
+      await tester.tapAt(face.topCenter - const Offset(0, 3));
+      await tester.tapAt(face.bottomCenter + const Offset(0, 3));
+
+      expect(digits, [5, 5, 5, 5]);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK42: a tap that drifts before lifting still enters its key', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      // Android cancels a tap after 8dp of drift and iOS after 18dp.
+      final finger = await tester.startGesture(
+        tester.getCenter(find.text('5')),
+      );
+      await finger.moveBy(const Offset(20, 0));
+      await finger.up();
+
+      expect(digits, [5]);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK43: sliding a key away from a press cancels it', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      final finger = await tester.startGesture(
+        tester.getCenter(find.text('5')),
+      );
+      await finger.moveBy(const Offset(0, -60));
+      await finger.up();
+
+      expect(digits, isEmpty);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK44: keys enter in the order they were pressed', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      // The finger on 1 is still down when 2 is pressed, and lifts last.
+      final first = await tester.startGesture(tester.getCenter(find.text('1')));
+      final second = await tester.startGesture(
+        tester.getCenter(find.text('2')),
+      );
+      await second.up();
+      await first.up();
+
+      expect(digits, [1, 2]);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK45: a tap on a clipped corner of an icon key enters it', (
+      tester,
+    ) async {
+      var backspaces = 0;
+      await tester.pumpWidget(_wrap(_keypad(onBackspace: () => backspaces++)));
+      final face = tester.getRect(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.backspace_outlined),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+
+      await tester.tapAt(face.topLeft + const Offset(1, 1));
+      await tester.tapAt(face.bottomRight - const Offset(1, 1));
+
+      expect(backspaces, 2);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK46: a right-click enters nothing', (tester) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      final mouse = await tester.startGesture(
+        tester.getCenter(find.text('5')),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryButton,
+      );
+      addTearDown(mouse.removePointer);
+      await mouse.up();
+
+      expect(digits, isEmpty);
+    });
+
+    testWidgets('WK46b: a stylus press is taken like a finger press', (
+      tester,
+    ) async {
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      final stylus = await tester.startGesture(
+        tester.getCenter(find.text('5')),
+        kind: PointerDeviceKind.stylus,
+      );
+      await stylus.moveBy(const Offset(20, 0));
+      await stylus.up();
+
+      expect(digits, [5]);
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK47: a key ripples the moment a finger lands', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(_keypad()));
+      // The Material's ink features; the getter is null while it has none.
+      List<Object> ink() {
+        final dynamic material = Material.of(tester.element(find.text('5')));
+        // ignore: avoid_dynamic_calls
+        return material.debugInkFeatures as List<Object>? ?? const [];
+      }
+
+      expect(ink(), isEmpty);
+
+      final finger = await tester.startGesture(
+        tester.getCenter(find.text('5')),
+      );
+
+      expect(ink(), hasLength(1));
+      // Held past the InkWell's own 100ms press timeout, and lifted: still
+      // the one ripple.
+      await tester.pump(const Duration(milliseconds: 150));
+      await finger.up();
+      expect(ink(), hasLength(1));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('WK48: every entry fires one haptic, however it is entered', (
+      tester,
+    ) async {
+      final haptics = _recordHaptics(tester);
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      // A slow press, then 1 entered early by the finger landing on 2.
+      final slow = await tester.startGesture(tester.getCenter(find.text('5')));
+      await tester.pump(const Duration(milliseconds: 300));
+      await slow.up();
+      final first = await tester.startGesture(tester.getCenter(find.text('1')));
+      final second = await tester.startGesture(
+        tester.getCenter(find.text('2')),
+      );
+      await first.up();
+      await second.up();
+
+      expect(digits, [5, 1, 2]);
+      expect(haptics, hasLength(3));
+      await tester.pump(kDoubleTapMinTime);
+    });
+
+    testWidgets('WK49: a screen-reader tap enters a key once', (tester) async {
+      final handle = tester.ensureSemantics();
+      final haptics = _recordHaptics(tester);
+      final digits = <int>[];
+      await tester.pumpWidget(_wrap(_keypad(onDigit: digits.add)));
+
+      tester.semantics.tap(find.semantics.byLabel('5'));
+
+      expect(digits, [5]);
+      expect(haptics, hasLength(1));
+      handle.dispose();
+    });
   });
 }

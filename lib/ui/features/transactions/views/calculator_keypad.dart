@@ -19,15 +19,20 @@
 //     transaction form keeps its AppBar Save too, so the thumb that typed
 //     the amount can save without reaching the top of the screen.
 //   - Five rows share the height four rows of 48–56dp keys took before
-//     issue #144, so keys are about 37–43dp: below the 48dp tap target
-//     (PRD → Accessibility lists the exception). Given less height than
-//     [minHeight], they shrink further (issue #100).
+//     issue #144, so key faces are about 37–43dp tall. A key takes presses
+//     over its whole cell, the 4dp around its face included, which is about
+//     45–51dp tall (PRD → Accessibility). Given less height than
+//     [minHeight], the keys shrink further (issue #100).
+//   - Every finger is a tap of its own, and keys enter in the order they
+//     were pressed (issue #159; see `_KeyTaps`).
 
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../core/widgets/redirect_to_center.dart';
 import '../view_models/keypad_state.dart';
 
 class const CalculatorKeypad({
@@ -143,15 +148,116 @@ class const CalculatorKeypad({
   static const double _maxKeyHeight = 4 * (56 + 8) / 5 - 8;
 
   Widget _row(List<Widget> children, double keyHeight) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: SizedBox(
-        height: keyHeight,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [for (final c in children) Expanded(child: c)],
-        ),
+    return SizedBox(
+      height: keyHeight + 8,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final c in children)
+            Expanded(
+              // A press in the 4dp around a key's face, or on the face's
+              // clipped corners, goes to the key, so none falls between
+              // two keys (issue #159).
+              child: RedirectToCenter(
+                child: Padding(padding: const EdgeInsets.all(4), child: c),
+              ),
+            ),
+        ],
       ),
+    );
+  }
+}
+
+/// The press whose finger is still down and that has entered nothing yet, by
+/// pointer. At most one, because a new press enters the one before it.
+/// Shared by every key, so a finger landing on one key enters the press held
+/// on another.
+final _held = <int, VoidCallback>{};
+
+/// Takes the finger taps of the key it sits in, in place of the key's
+/// [InkWell], whose tap recognizer follows one finger at a time and lost the
+/// presses of fast typing (issue #159):
+///   - every finger is a tap of its own, so a second finger on a key still
+///     held enters it again;
+///   - a tap survives its finger drifting up to about a key away, where an
+///     InkWell tap is cancelled after 8dp on Android and 18dp on iOS;
+///   - a press enters when its finger lifts, or as soon as another finger
+///     lands on a key, so keys enter in the order they were pressed even
+///     when the first finger lifts last.
+///
+/// A press activates the InkWell as a hardware keyboard would, so the haptic
+/// and the screen-reader path stay the InkWell's. The InkWell would start
+/// its ripple only 100ms into a press, because it now shares the press with
+/// this recognizer, so the ripple is drawn here, as the finger lands. A
+/// mouse, or a stylus with a button held, is left to the InkWell.
+class const _KeyTaps({required final bool enabled, required final Widget child})
+    extends StatefulWidget {
+  @override
+  State<_KeyTaps> createState() => _KeyTapsState();
+}
+
+class _KeyTapsState extends State<_KeyTaps> {
+  /// The ripples still playing, which the key's Material does not remove
+  /// when the key goes.
+  final _ripples = <InteractiveInkFeature>{};
+
+  void _enter() => Actions.invoke(context, const ActivateIntent());
+
+  void _ripple(Offset position) {
+    final theme = Theme.of(context);
+    late final InteractiveInkFeature ripple;
+    ripple = theme.splashFactory.create(
+      controller: Material.of(context),
+      referenceBox: context.findRenderObject()! as RenderBox,
+      position: position,
+      color: theme.splashColor,
+      containedInkWell: true,
+      textDirection: Directionality.of(context),
+      onRemoved: () => _ripples.remove(ripple),
+    )..confirm();
+    _ripples.add(ripple);
+  }
+
+  @override
+  void dispose() {
+    for (final ripple in [..._ripples]) {
+      ripple.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RawGestureDetector(
+      behavior: HitTestBehavior.opaque,
+      gestures: {
+        if (widget.enabled)
+          MultiTapGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
+                () => MultiTapGestureRecognizer(
+                  supportedDevices: const {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.stylus,
+                  },
+                  allowedButtonsFilter: (buttons) => buttons == kPrimaryButton,
+                ),
+                (taps) => taps
+                  ..gestureSettings = const DeviceGestureSettings(
+                    touchSlop: kMinInteractiveDimension,
+                  )
+                  ..onTapDown = (pointer, details) {
+                    final older = _held.values.firstOrNull;
+                    _held
+                      ..clear()
+                      ..[pointer] = _enter;
+                    older?.call();
+                    _ripple(details.localPosition);
+                  }
+                  ..onTap = ((pointer) => _held.remove(pointer)?.call())
+                  ..onTapCancel = _held.remove,
+              ),
+      },
+      child: widget.child,
     );
   }
 }
@@ -212,13 +318,14 @@ class const _TextKey({
         child: ExcludeSemantics(child: child),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Material(
-        color: _keyColor(colors, onTap, accent: accent),
-        borderRadius: BorderRadius.circular(12),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(onTap: _withHaptic(onTap), child: child),
+    return Material(
+      color: _keyColor(colors, onTap, accent: accent),
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _withHaptic(onTap),
+        splashFactory: NoSplash.splashFactory,
+        child: _KeyTaps(enabled: onTap != null, child: child),
       ),
     );
   }
@@ -236,7 +343,7 @@ class const _IconKey({
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    final key = Semantics(
+    return Semantics(
       button: true,
       enabled: onTap != null,
       onLongPressHint: onLongPress == null ? null : l10n.txKeypadClear,
@@ -247,23 +354,28 @@ class const _IconKey({
         color: _keyColor(colors, onTap),
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _withHaptic(onTap),
-          onLongPress: onLongPress,
-          child: Center(
-            child: Icon(
-              icon,
-              color: onTap == null
-                  ? colors.onSurface.withValues(alpha: 0.4)
-                  : null,
+        // Inside the Material's clip, so that a press on a clipped corner
+        // misses the tooltip too and goes to the key's centre.
+        child: Tooltip(
+          message: tooltip,
+          child: InkWell(
+            onTap: _withHaptic(onTap),
+            onLongPress: onLongPress,
+            splashFactory: NoSplash.splashFactory,
+            child: _KeyTaps(
+              enabled: onTap != null,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: onTap == null
+                      ? colors.onSurface.withValues(alpha: 0.4)
+                      : null,
+                ),
+              ),
             ),
           ),
         ),
       ),
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Tooltip(message: tooltip, child: key),
     );
   }
 }

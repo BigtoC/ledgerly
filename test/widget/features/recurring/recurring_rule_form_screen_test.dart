@@ -7,6 +7,7 @@
 // controller, repository or use case — those are covered by controller,
 // repository and use-case unit tests respectively.
 
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -427,7 +428,8 @@ void main() {
           matching: find.text(label),
         ),
       );
-      await tester.pump();
+      // Past the 40ms timer every keypad tap starts, so the test can end.
+      await tester.pump(kDoubleTapMinTime);
     }
 
     testWidgets('RFS12: the keypad = finishes the calculation', (tester) async {
