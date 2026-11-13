@@ -23,8 +23,11 @@
 //     over its whole cell, the 4dp around its face included, which is about
 //     45–51dp tall (PRD → Accessibility). Given less height than
 //     [minHeight], the keys shrink further (issue #100).
+//   - Every finger is a tap of its own, and keys enter in the order they
+//     were pressed (issue #159; see `_KeyTaps`).
 
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
@@ -165,6 +168,100 @@ class const CalculatorKeypad({
   }
 }
 
+/// The press whose finger is still down and that has entered nothing yet, by
+/// pointer. At most one, because a new press enters the one before it.
+/// Shared by every key, so a finger landing on one key enters the press held
+/// on another.
+final _held = <int, VoidCallback>{};
+
+/// Takes the finger taps of the key it sits in, in place of the key's
+/// [InkWell], whose tap recognizer follows one finger at a time and lost the
+/// presses of fast typing (issue #159):
+///   - every finger is a tap of its own, so a second finger on a key still
+///     held enters it again;
+///   - a tap survives its finger drifting up to about a key away, where an
+///     InkWell tap is cancelled after 8dp on Android and 18dp on iOS;
+///   - a press enters when its finger lifts, or as soon as another finger
+///     lands on a key, so keys enter in the order they were pressed even
+///     when the first finger lifts last.
+///
+/// A press activates the InkWell as a hardware keyboard would, so the haptic
+/// and the screen-reader path stay the InkWell's. The InkWell would start
+/// its ripple only 100ms into a press, because it now shares the press with
+/// this recognizer, so the ripple is drawn here, as the finger lands. A
+/// mouse, or a stylus with a button held, is left to the InkWell.
+class const _KeyTaps({required final bool enabled, required final Widget child})
+    extends StatefulWidget {
+  @override
+  State<_KeyTaps> createState() => _KeyTapsState();
+}
+
+class _KeyTapsState extends State<_KeyTaps> {
+  /// The ripples still playing, which the key's Material does not remove
+  /// when the key goes.
+  final _ripples = <InteractiveInkFeature>{};
+
+  void _enter() => Actions.invoke(context, const ActivateIntent());
+
+  void _ripple(Offset position) {
+    final theme = Theme.of(context);
+    late final InteractiveInkFeature ripple;
+    ripple = theme.splashFactory.create(
+      controller: Material.of(context),
+      referenceBox: context.findRenderObject()! as RenderBox,
+      position: position,
+      color: theme.splashColor,
+      containedInkWell: true,
+      textDirection: Directionality.of(context),
+      onRemoved: () => _ripples.remove(ripple),
+    )..confirm();
+    _ripples.add(ripple);
+  }
+
+  @override
+  void dispose() {
+    for (final ripple in [..._ripples]) {
+      ripple.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RawGestureDetector(
+      behavior: HitTestBehavior.opaque,
+      gestures: {
+        if (widget.enabled)
+          MultiTapGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<MultiTapGestureRecognizer>(
+                () => MultiTapGestureRecognizer(
+                  supportedDevices: const {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.stylus,
+                  },
+                  allowedButtonsFilter: (buttons) => buttons == kPrimaryButton,
+                ),
+                (taps) => taps
+                  ..gestureSettings = const DeviceGestureSettings(
+                    touchSlop: kMinInteractiveDimension,
+                  )
+                  ..onTapDown = (pointer, details) {
+                    final older = _held.values.firstOrNull;
+                    _held
+                      ..clear()
+                      ..[pointer] = _enter;
+                    older?.call();
+                    _ripple(details.localPosition);
+                  }
+                  ..onTap = ((pointer) => _held.remove(pointer)?.call())
+                  ..onTapCancel = _held.remove,
+              ),
+      },
+      child: widget.child,
+    );
+  }
+}
+
 /// Wraps a key's tap handler so it fires a light haptic first. A null
 /// handler stays null so disabled keys keep their disabled styling.
 VoidCallback? _withHaptic(VoidCallback? onTap) {
@@ -225,7 +322,11 @@ class const _TextKey({
       color: _keyColor(colors, onTap, accent: accent),
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(onTap: _withHaptic(onTap), child: child),
+      child: InkWell(
+        onTap: _withHaptic(onTap),
+        splashFactory: NoSplash.splashFactory,
+        child: _KeyTaps(enabled: onTap != null, child: child),
+      ),
     );
   }
 }
@@ -260,12 +361,16 @@ class const _IconKey({
           child: InkWell(
             onTap: _withHaptic(onTap),
             onLongPress: onLongPress,
-            child: Center(
-              child: Icon(
-                icon,
-                color: onTap == null
-                    ? colors.onSurface.withValues(alpha: 0.4)
-                    : null,
+            splashFactory: NoSplash.splashFactory,
+            child: _KeyTaps(
+              enabled: onTap != null,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: onTap == null
+                      ? colors.onSurface.withValues(alpha: 0.4)
+                      : null,
+                ),
               ),
             ),
           ),
