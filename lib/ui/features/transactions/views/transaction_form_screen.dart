@@ -60,12 +60,12 @@ import 'memo_field.dart';
 import 'memo_suggestions.dart';
 
 @Dependencies([TransactionFormController, categoriesByType])
-class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key, required this.mode});
+class const TransactionFormScreen({
+  super.key,
 
   /// Which entry point opened the form.
-  final TransactionFormMode mode;
-
+  required final TransactionFormMode mode,
+}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<TransactionFormScreen> createState() =>
       _TransactionFormScreenState();
@@ -611,19 +611,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
 /// "Add to shopping list" inline button shown in AddTransactionMode, below
 /// the MemoField. Disabled until [canSaveDraft] is true.
-class _AddToShoppingListAction extends StatelessWidget {
-  const _AddToShoppingListAction({
-    required this.canSaveDraft,
-    required this.label,
-    required this.inFlight,
-    required this.onPressed,
-  });
-
-  final bool canSaveDraft;
-  final String label;
-  final bool inFlight;
-  final VoidCallback onPressed;
-
+class const _AddToShoppingListAction({
+  required final bool canSaveDraft,
+  required final String label,
+  required final bool inFlight,
+  required final VoidCallback onPressed,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -645,19 +638,12 @@ class _AddToShoppingListAction extends StatelessWidget {
 
 /// Inline action row shown in EditShoppingListDraftMode, below the MemoField.
 /// Shows archived-ref warnings when applicable.
-class _ShoppingListDraftActions extends StatelessWidget {
-  const _ShoppingListDraftActions({
-    required this.state,
-    required this.l10n,
-    required this.onSaveToTransaction,
-    required this.onSaveDraft,
-  });
-
-  final TransactionFormData state;
-  final AppLocalizations l10n;
-  final VoidCallback onSaveToTransaction;
-  final VoidCallback onSaveDraft;
-
+class const _ShoppingListDraftActions({
+  required final TransactionFormData state,
+  required final AppLocalizations l10n,
+  required final VoidCallback onSaveToTransaction,
+  required final VoidCallback onSaveDraft,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inFlight =
@@ -731,17 +717,11 @@ class _ShoppingListDraftActions extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.reason,
-    required this.onCreateAccount,
-    required this.onBackToHome,
-  });
-
-  final TransactionFormEmptyReason reason;
-  final VoidCallback onCreateAccount;
-  final VoidCallback onBackToHome;
-
+class const _EmptyState({
+  required final TransactionFormEmptyReason reason,
+  required final VoidCallback onCreateAccount,
+  required final VoidCallback onBackToHome,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

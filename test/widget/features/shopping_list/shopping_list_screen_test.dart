@@ -67,10 +67,8 @@ ShoppingListItem _item({required int id, String? memo}) => ShoppingListItem(
 );
 
 /// A fake controller that returns a fixed state.
-class _FakeShoppingListController extends ShoppingListController {
-  _FakeShoppingListController(this._fixed);
-  final ShoppingListState _fixed;
-
+class _FakeShoppingListController(final ShoppingListState _fixed)
+    extends ShoppingListController {
   @override
   Stream<ShoppingListState> build() async* {
     yield _fixed;

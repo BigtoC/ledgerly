@@ -24,9 +24,8 @@ import '../database/daos/transaction_dao.dart';
 import 'repository_exceptions.dart';
 
 /// Generic category-layer failure. Stream-A-local per §1.3.
-class CategoryRepositoryException extends RepositoryException {
-  const CategoryRepositoryException(super.message);
-}
+class const CategoryRepositoryException(super.message)
+    extends RepositoryException;
 
 /// Raised by [CategoryRepository.save] when the caller attempts to
 /// change `Category.type` on a row that already has a referencing
@@ -139,11 +138,8 @@ abstract class CategoryRepository {
 }
 
 /// Concrete Drift-backed implementation of [CategoryRepository].
-final class DriftCategoryRepository implements CategoryRepository {
-  DriftCategoryRepository(this._db);
-
-  final AppDatabase _db;
-
+final class DriftCategoryRepository(final AppDatabase _db)
+    implements CategoryRepository {
   CategoryDao get _dao => _db.categoryDao;
   TransactionDao get _txDao => _db.transactionDao;
   ShoppingListDao get _slDao => _db.shoppingListDao;

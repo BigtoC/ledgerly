@@ -15,36 +15,24 @@ const double _kExpandedContentMinWidth = 98;
 
 /// A 48 dp search box whose width grows from 48 to [expandedWidth] while
 /// [expanded]. The parent keeps its right edge fixed, so it grows leftwards.
-class AnalysisSearchField extends StatelessWidget {
-  const AnalysisSearchField({
-    super.key,
-    required this.expanded,
-    required this.expandedWidth,
-    required this.controller,
-    required this.focusNode,
-    required this.openButtonFocusNode,
-    required this.closeButtonFocusNode,
-    required this.onOpen,
-    required this.onClose,
-    required this.onChanged,
-  });
-
-  final bool expanded;
-  final double expandedWidth;
-  final TextEditingController controller;
-  final FocusNode focusNode;
+class const AnalysisSearchField({
+  super.key,
+  required final bool expanded,
+  required final double expandedWidth,
+  required final TextEditingController controller,
+  required final FocusNode focusNode,
 
   /// Focus node of the collapsed search button, so the parent can return
   /// focus to it after Close.
-  final FocusNode openButtonFocusNode;
+  required final FocusNode openButtonFocusNode,
 
   /// Focus node of the Close button, so the parent can tell a keyboard
   /// close (Close held focus) from a tap.
-  final FocusNode closeButtonFocusNode;
-  final VoidCallback onOpen;
-  final VoidCallback onClose;
-  final ValueChanged<String> onChanged;
-
+  required final FocusNode closeButtonFocusNode,
+  required final VoidCallback onOpen,
+  required final VoidCallback onClose,
+  required final ValueChanged<String> onChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -105,12 +93,10 @@ class AnalysisSearchField extends StatelessWidget {
   }
 }
 
-class _OpenButton extends StatelessWidget {
-  const _OpenButton({required this.focusNode, required this.onOpen});
-
-  final FocusNode focusNode;
-  final VoidCallback onOpen;
-
+class const _OpenButton({
+  required final FocusNode focusNode,
+  required final VoidCallback onOpen,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -141,21 +127,13 @@ class _OpenButton extends StatelessWidget {
   }
 }
 
-class _ExpandedContent extends StatelessWidget {
-  const _ExpandedContent({
-    required this.controller,
-    required this.focusNode,
-    required this.closeButtonFocusNode,
-    required this.onClose,
-    required this.onChanged,
-  });
-
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final FocusNode closeButtonFocusNode;
-  final VoidCallback onClose;
-  final ValueChanged<String> onChanged;
-
+class const _ExpandedContent({
+  required final TextEditingController controller,
+  required final FocusNode focusNode,
+  required final FocusNode closeButtonFocusNode,
+  required final VoidCallback onClose,
+  required final ValueChanged<String> onChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

@@ -20,11 +20,8 @@ Future<String?> showMemoPickerSheet(BuildContext context, int categoryId) {
   );
 }
 
-class _MemoPickerSheet extends ConsumerWidget {
-  const _MemoPickerSheet({required this.categoryId});
-
-  final int categoryId;
-
+class const _MemoPickerSheet({required final int categoryId})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

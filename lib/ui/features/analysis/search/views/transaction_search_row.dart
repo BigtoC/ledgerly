@@ -20,28 +20,19 @@ import '../../../../../domain/models/transaction.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../categories/views/category_display.dart';
 
-class TransactionSearchRow extends StatelessWidget {
-  const TransactionSearchRow({
-    super.key,
-    required this.transaction,
-    required this.category,
-    required this.account,
-    required this.locale,
-    required this.onTap,
-    required this.onDelete,
-  });
-
-  final Transaction transaction;
-  final Category? category;
-  final Account? account;
-  final String locale;
+class const TransactionSearchRow({
+  super.key,
+  required final Transaction transaction,
+  required final Category? category,
+  required final Account? account,
+  required final String locale,
 
   /// Primary tap.
-  final VoidCallback onTap;
+  required final VoidCallback onTap,
 
   /// End-swipe delete.
-  final VoidCallback onDelete;
-
+  required final VoidCallback onDelete,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

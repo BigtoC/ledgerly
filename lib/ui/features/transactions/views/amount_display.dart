@@ -39,32 +39,25 @@ import '../../../../l10n/app_localizations.dart';
 import '../view_models/amount_formula.dart';
 import '../view_models/keypad_state.dart';
 
-class AmountDisplay extends StatelessWidget {
-  const AmountDisplay({
-    super.key,
-    required this.keypad,
-    required this.currency,
-    this.currencyTouched = false,
-    this.hasError = false,
-  });
+class const AmountDisplay({
+  super.key,
 
   /// Source of truth for what to render. The screen reads it from the
   /// form state's `keypad` snapshot on each rebuild — a value-typed
   /// snapshot keeps the widget free of controller-instance coupling.
-  final KeypadState keypad;
-
-  final Currency currency;
+  required final KeypadState keypad,
+  required final Currency currency,
 
   /// When true and `amountMinorUnits == 0` and no calculator state is
   /// active, renders `txAmountPlaceholderInCurrency(code)` instead of "0"
   /// to signal the amount was cleared after a currency change.
-  final bool currencyTouched;
+  final bool currencyTouched = false,
 
   /// When true, the display draws an error-toned outline and the
   /// surrounding label switches to the inline-validation color (Wave 2 §9
   /// inline validation).
-  final bool hasError;
-
+  final bool hasError = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

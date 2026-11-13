@@ -105,21 +105,18 @@ class HomeController extends _$HomeController {
 /// Owns the four upstream subscriptions and merges them into a single
 /// [HomeState] broadcast stream. Plain class so `ref.onDispose` can
 /// cancel everything deterministically.
-class _Composer {
-  _Composer({
-    required this._repo,
-    required this._selectedDayGetter,
-    required this._todayGetter,
-  }) {
+class _Composer({
+  required final TransactionRepository _repo,
+  required final DateTime Function() _selectedDayGetter,
+  required final DateTime Function() _todayGetter,
+}) {
+  this {
     _out = StreamController<HomeState>.broadcast(
       onListen: _start,
       onCancel: _stop,
     );
   }
 
-  final TransactionRepository _repo;
-  final DateTime Function() _selectedDayGetter;
-  final DateTime Function() _todayGetter;
   late final StreamController<HomeState> _out;
 
   StreamSubscription<List<Transaction>>? _daySub;

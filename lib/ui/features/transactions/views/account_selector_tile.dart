@@ -10,18 +10,12 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../domain/models/account.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class AccountSelectorTile extends StatelessWidget {
-  const AccountSelectorTile({
-    super.key,
-    required this.account,
-    required this.onTap,
-    this.hasError = false,
-  });
-
-  final Account? account;
-  final VoidCallback onTap;
-  final bool hasError;
-
+class const AccountSelectorTile({
+  super.key,
+  required final Account? account,
+  required final VoidCallback onTap,
+  final bool hasError = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

@@ -552,23 +552,15 @@ List<String> _libFiles() =>
         .toList()
       ..sort();
 
-class _Rule {
-  _Rule(
-    this.name,
-    this.searchFilePath,
-    this.notAllowed,
-    this.notAllowedExports,
-    this.ignored,
-  );
-
-  final String name;
-  final RegExp searchFilePath;
-  final List<RegExp> notAllowed;
+class _Rule(
+  final String name,
+  final RegExp searchFilePath,
+  final List<RegExp> notAllowed,
 
   /// Checked against `export` URIs only, on top of [notAllowed].
-  final List<RegExp> notAllowedExports;
-  final List<RegExp> ignored;
-
+  final List<RegExp> notAllowedExports,
+  final List<RegExp> ignored,
+) {
   bool appliesTo(String path) => searchFilePath.hasMatch(path);
 
   bool forbids(String uri, {required bool export}) =>
@@ -577,14 +569,12 @@ class _Rule {
       !ignored.any((r) => r.hasMatch(uri));
 }
 
-class _Config {
-  _Config(this.rules, this.baseline);
-
-  final List<_Rule> rules;
+class _Config(
+  final List<_Rule> rules,
 
   /// `rule | file | import` keys, see [_Violation.key].
-  final Set<String> baseline;
-
+  final Set<String> baseline,
+) {
   static const _ruleKeys = {
     'search_file_path_reg_exp',
     'not_allow_import_reg_exps',
@@ -639,15 +629,13 @@ class _Config {
 
 String _key(Object? rule, Object? file, Object? uri) => '$rule | $file | $uri';
 
-class _Violation {
-  _Violation(this.rule, this.file, this.line, this.written, this.uri);
-
-  final String rule;
-  final String file;
-  final int line;
-  final String written;
-  final String uri;
-
+class _Violation(
+  final String rule,
+  final String file,
+  final int line,
+  final String written,
+  final String uri,
+) {
   String get key => _key(rule, file, uri);
 
   String describe() {
@@ -725,10 +713,7 @@ int? _leftoverDirective(String source, List<_Directive> scanned) {
   return null;
 }
 
-class _Cursor {
-  _Cursor(this.src);
-
-  final String src;
+class _Cursor(final String src) {
   int pos = 0;
   int line = 1;
 

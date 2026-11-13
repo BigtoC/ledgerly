@@ -15,11 +15,8 @@ import '../view_models/pending_controller.dart';
 import '../view_models/pending_state.dart';
 
 @Dependencies([PendingController])
-class PendingSnackBars extends ConsumerStatefulWidget {
-  const PendingSnackBars({super.key, required this.child});
-
-  final Widget child;
-
+class const PendingSnackBars({super.key, required final Widget child})
+    extends ConsumerStatefulWidget {
   @override
   ConsumerState<PendingSnackBars> createState() => _PendingSnackBarsState();
 }

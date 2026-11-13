@@ -95,12 +95,10 @@ abstract class AccountTypeRepository {
 }
 
 /// Concrete Drift-backed implementation of [AccountTypeRepository].
-final class DriftAccountTypeRepository implements AccountTypeRepository {
-  DriftAccountTypeRepository(this._db, this._currencies);
-
-  final drift.AppDatabase _db;
-  final CurrencyRepository _currencies;
-
+final class DriftAccountTypeRepository(
+  final drift.AppDatabase _db,
+  final CurrencyRepository _currencies,
+) implements AccountTypeRepository {
   AccountTypeDao get _dao => _db.accountTypeDao;
 
   // ---------- Reads ----------

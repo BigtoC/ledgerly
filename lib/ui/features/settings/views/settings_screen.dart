@@ -46,9 +46,7 @@ import 'theme_mode_selector.dart';
   defaultCurrency,
   PendingController,
 ])
-class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
-
+class const SettingsScreen({super.key}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -74,11 +72,8 @@ class SettingsScreen extends ConsumerWidget {
   defaultCurrency,
   PendingController,
 ])
-class _SettingsBody extends ConsumerWidget {
-  const _SettingsBody({required this.data});
-
-  final SettingsData data;
-
+class const _SettingsBody({required final SettingsData data})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

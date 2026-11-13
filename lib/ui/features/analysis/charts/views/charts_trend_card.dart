@@ -15,29 +15,20 @@ import 'daily_bar_chart.dart';
 
 /// Trend card: title, average legend, slice filter chip and the bar chart.
 /// See `docs/superpowers/specs/2026-11-02-analysis-redesign-design.md` § 7.
-class ChartsTrendCard extends StatelessWidget {
-  const ChartsTrendCard({
-    super.key,
-    required this.data,
-    required this.selectedSlice,
-    required this.onClearSlice,
-    required this.locale,
-    required this.currenciesByCode,
-    this.accountName,
-  });
-
-  final ChartsData data;
+class const ChartsTrendCard({
+  super.key,
+  required final ChartsData data,
 
   /// The slice the bars are filtered to, if any.
-  final ChartSlice? selectedSlice;
-  final VoidCallback onClearSlice;
-  final String locale;
-  final Map<String, Currency> currenciesByCode;
+  required final ChartSlice? selectedSlice,
+  required final VoidCallback onClearSlice,
+  required final String locale,
+  required final Map<String, Currency> currenciesByCode,
 
   /// The filtered account's name, shown as `<Account> · ` before the
   /// average. Null = all accounts.
-  final String? accountName;
-
+  final String? accountName,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -193,12 +184,10 @@ class ChartsTrendCard extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatefulWidget {
-  const _FilterChip({required this.slice, required this.onTap});
-
-  final ChartSlice slice;
-  final VoidCallback onTap;
-
+class const _FilterChip({
+  required final ChartSlice slice,
+  required final VoidCallback onTap,
+}) extends StatefulWidget {
   @override
   State<_FilterChip> createState() => _FilterChipState();
 }
@@ -287,16 +276,12 @@ class _FilterChipState extends State<_FilterChip> {
 
 /// An [InkWell] over the whole 44 px hit target whose ripple, highlight and
 /// focus ink cover only the pill inside it (D16).
-class _PillInkWell extends InkWell {
-  const _PillInkWell({
-    required this.pillKey,
-    super.onTap,
-    super.customBorder,
-    super.child,
-  });
-
-  final GlobalKey pillKey;
-
+class const _PillInkWell({
+  required final GlobalKey pillKey,
+  super.onTap,
+  super.customBorder,
+  super.child,
+}) extends InkWell {
   @override
   RectCallback getRectCallback(RenderBox referenceBox) => () {
     final pill = pillKey.currentContext?.findRenderObject();
@@ -311,11 +296,7 @@ class _PillInkWell extends InkWell {
 }
 
 /// The average line's legend: a 1.5 px `[3, 3]` dashed stroke.
-class _DashPainter extends CustomPainter {
-  const _DashPainter(this.color);
-
-  final Color color;
-
+class const _DashPainter(final Color color) extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()

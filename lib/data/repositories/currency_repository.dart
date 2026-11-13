@@ -73,11 +73,8 @@ Currency currencyFromRow(drift.Currency row) => Currency(
 );
 
 /// Concrete Drift-backed implementation of [CurrencyRepository].
-final class DriftCurrencyRepository implements CurrencyRepository {
-  DriftCurrencyRepository(this._db);
-
-  final drift.AppDatabase _db;
-
+final class DriftCurrencyRepository(final drift.AppDatabase _db)
+    implements CurrencyRepository {
   CurrencyDao get _dao => _db.currencyDao;
 
   // ---------- Reads ----------

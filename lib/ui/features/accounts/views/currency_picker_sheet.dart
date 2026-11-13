@@ -32,11 +32,7 @@ Future<Currency?> showCurrencyPickerSheet(
   );
 }
 
-class _CurrencyPickerSheet extends ConsumerWidget {
-  const _CurrencyPickerSheet({this.title});
-
-  final String? title;
-
+class const _CurrencyPickerSheet({final String? title}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

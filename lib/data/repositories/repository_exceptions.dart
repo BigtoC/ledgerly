@@ -18,14 +18,12 @@
 
 /// Base for every typed repository exception. Never thrown directly —
 /// subclasses carry the specific failure.
-abstract class RepositoryException implements Exception {
-  const RepositoryException(this.message);
-
+abstract class const RepositoryException(
   /// Human-readable description. Intended for developer logs and test
   /// assertions; user-facing copy is assembled by controllers from the
   /// subclass fields.
-  final String message;
-
+  final String message,
+) implements Exception {
   @override
   String toString() => '$runtimeType: $message';
 }

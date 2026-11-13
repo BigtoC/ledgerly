@@ -189,9 +189,7 @@ void main() {
   });
 }
 
-class _UnreadableXFile extends XFile {
-  _UnreadableXFile(super.path);
-
+class _UnreadableXFile(super.path) extends XFile {
   @override
   Future<Uint8List> readAsBytes() =>
       throw const FileSystemException('unreadable');

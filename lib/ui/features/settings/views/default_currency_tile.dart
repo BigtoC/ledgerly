@@ -14,11 +14,10 @@ import '../view_models/settings_controller.dart';
 import '../view_models/settings_state.dart';
 
 @Dependencies([SettingsController])
-class DefaultCurrencyTile extends ConsumerWidget {
-  const DefaultCurrencyTile({super.key, required this.defaultCurrency});
-
-  final String defaultCurrency;
-
+class const DefaultCurrencyTile({
+  super.key,
+  required final String defaultCurrency,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

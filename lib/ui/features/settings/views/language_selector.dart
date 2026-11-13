@@ -22,12 +22,12 @@ const _zhCn = Locale('zh', 'CN');
 const _en = Locale('en');
 
 @Dependencies([SettingsController])
-class LanguageSelector extends ConsumerWidget {
-  const LanguageSelector({super.key, required this.value});
+class const LanguageSelector({
+  super.key,
 
   /// `null` means "follow system".
-  final Locale? value;
-
+  required final Locale? value,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

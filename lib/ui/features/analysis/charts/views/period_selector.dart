@@ -64,38 +64,25 @@ String? _allTimeCaption(ChartsRange range, String locale) {
   return '${month.format(range.start)} – ${month.format(last)}';
 }
 
-class PeriodSelector extends StatelessWidget {
-  const PeriodSelector({
-    super.key,
-    required this.period,
-    required this.anchorDate,
-    required this.isAtCurrent,
-    required this.locale,
-    required this.onPrevious,
-    required this.onNext,
-    required this.onPeriodChanged,
-    required this.onPick,
-    required this.pickerOpen,
-    this.allTimeRange,
-  });
-
-  final PeriodType period;
-  final DateTime anchorDate;
-  final bool isAtCurrent;
-
-  /// All's resolved range, for its caption; null while it loads.
-  final ChartsRange? allTimeRange;
-  final String locale;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
-  final ValueChanged<PeriodType> onPeriodChanged;
+class const PeriodSelector({
+  super.key,
+  required final PeriodType period,
+  required final DateTime anchorDate,
+  required final bool isAtCurrent,
+  required final String locale,
+  required final VoidCallback onPrevious,
+  required final VoidCallback onNext,
+  required final ValueChanged<PeriodType> onPeriodChanged,
 
   /// Opens the period picker; ignored on All, which has none.
-  final VoidCallback onPick;
+  required final VoidCallback onPick,
 
   /// Whether the period picker is open, for the label's caret.
-  final bool pickerOpen;
+  required final bool pickerOpen,
 
+  /// All's resolved range, for its caption; null while it loads.
+  final ChartsRange? allTimeRange,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -139,16 +126,11 @@ class PeriodSelector extends StatelessWidget {
 
 /// One equal column per [PeriodType] on a rounded track; the selected
 /// segment is a raised thumb.
-class PeriodTrack extends StatelessWidget {
-  const PeriodTrack({
-    super.key,
-    required this.period,
-    required this.onPeriodChanged,
-  });
-
-  final PeriodType period;
-  final ValueChanged<PeriodType> onPeriodChanged;
-
+class const PeriodTrack({
+  super.key,
+  required final PeriodType period,
+  required final ValueChanged<PeriodType> onPeriodChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -190,17 +172,11 @@ class PeriodTrack extends StatelessWidget {
   }
 }
 
-class _PeriodSegment extends StatelessWidget {
-  const _PeriodSegment({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
+class const _PeriodSegment({
+  required final String label,
+  required final bool selected,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -253,32 +229,21 @@ class _PeriodSegment extends StatelessWidget {
 /// the label stays centred. With [onPick] the label and caption are one
 /// button with a caret that opens the period picker; [open] fills it and
 /// turns the caret up while the picker is open.
-class PeriodNavigator extends StatelessWidget {
-  const PeriodNavigator({
-    super.key,
-    required this.label,
-    required this.caption,
-    required this.onPrevious,
-    required this.onNext,
-    this.showChevrons = true,
-    this.pickerTitle,
-    this.onPick,
-    this.open = false,
-  });
-
-  final String label;
-  final String? caption;
-  final VoidCallback onPrevious;
-  final VoidCallback? onNext;
-  final bool showChevrons;
+class const PeriodNavigator({
+  super.key,
+  required final String label,
+  required final String? caption,
+  required final VoidCallback onPrevious,
+  required final VoidCallback? onNext,
+  final bool showChevrons = true,
 
   /// The picker's title, which starts the button's screen-reader name.
-  final String? pickerTitle;
+  final String? pickerTitle,
 
   /// Null on All: a plain label with no caret.
-  final VoidCallback? onPick;
-  final bool open;
-
+  final VoidCallback? onPick,
+  final bool open = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -400,18 +365,12 @@ class PeriodNavigator extends StatelessWidget {
 }
 
 /// A 48×48 period chevron, `fg`, `off` when disabled.
-class PeriodNavButton extends StatelessWidget {
-  const PeriodNavButton({
-    super.key,
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-
+class const PeriodNavButton({
+  super.key,
+  required final IconData icon,
+  required final String tooltip,
+  required final VoidCallback? onPressed,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);

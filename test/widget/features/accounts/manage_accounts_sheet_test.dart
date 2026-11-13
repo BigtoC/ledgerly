@@ -48,10 +48,8 @@ class _MockUserPreferencesRepository extends Mock
 class _MockCurrencyRepository extends Mock implements CurrencyRepository {}
 
 /// Yields [_fixed], or never emits when it is null (stays loading).
-class _FakeAccountsController extends AccountsController {
-  _FakeAccountsController(this._fixed);
-  final AccountsState? _fixed;
-
+class _FakeAccountsController(final AccountsState? _fixed)
+    extends AccountsController {
   @override
   Stream<AccountsState> build() async* {
     if (_fixed case final fixed?) yield fixed;

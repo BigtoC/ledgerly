@@ -18,9 +18,7 @@ import '../view_models/charts_state.dart';
 /// Always renders, even before the totals load, because it is the type
 /// toggle; amounts show "—" until then.
 @Dependencies([chartsNetTotal, ChartsSelectionController])
-class ChartsSummaryCard extends ConsumerWidget {
-  const ChartsSummaryCard({super.key});
-
+class const ChartsSummaryCard({super.key}) extends ConsumerWidget {
   static const _dash = '—';
 
   @override
@@ -150,17 +148,11 @@ class ChartsSummaryCard extends ConsumerWidget {
 /// right, 12 apart. D2: the label ellipsizes first, down to its first
 /// character and the ellipsis; past that the amount scales down, never cut
 /// off.
-class _NetRow extends StatelessWidget {
-  const _NetRow({
-    required this.label,
-    required this.amount,
-    required this.amountColor,
-  });
-
-  final String label;
-  final String amount;
-  final Color amountColor;
-
+class const _NetRow({
+  required final String label,
+  required final String amount,
+  required final Color amountColor,
+}) extends StatelessWidget {
   static const _gap = 12.0;
 
   @override
@@ -237,35 +229,23 @@ class _NetRow extends StatelessWidget {
   }
 }
 
-class _TypeTile extends StatelessWidget {
-  const _TypeTile({
-    required this.tileKey,
-    required this.dotKey,
-    required this.label,
-    required this.amount,
-    required this.selected,
-    required this.fill,
-    required this.text,
-    required this.tint,
-    required this.onTap,
-  });
-
-  final Key tileKey;
-  final Key dotKey;
-  final String label;
-  final String amount;
-  final bool selected;
+class const _TypeTile({
+  required final Key tileKey,
+  required final Key dotKey,
+  required final String label,
+  required final String amount,
+  required final bool selected,
 
   /// The type's fill (`exp` / `inc`): dot, selected border.
-  final Color fill;
+  required final Color fill,
 
   /// The type's text colour (`expText` / `incText`): selected label.
-  final Color text;
+  required final Color text,
 
   /// The type's tint (`expTint` / `incTint`): selected background.
-  final Color tint;
-  final VoidCallback onTap;
-
+  required final Color tint,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -349,12 +329,8 @@ class _TypeTile extends StatelessWidget {
 /// Expense and income segments sized like CSS `flex: <total> 1 0` with a
 /// 3 px gap: the gap stays when one side is zero, and both zero leave an
 /// empty track.
-class _RatioBar extends StatelessWidget {
-  const _RatioBar({required this.expense, required this.income});
-
-  final int expense;
-  final int income;
-
+class const _RatioBar({required final int expense, required final int income})
+    extends StatelessWidget {
   static const _gap = 3.0;
 
   @override

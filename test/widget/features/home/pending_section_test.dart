@@ -56,10 +56,7 @@ PendingTransaction _pending({
   recurringRuleId: 1,
 );
 
-class _FakeController extends PendingController {
-  _FakeController(this._fixed);
-  final PendingState _fixed;
-
+class _FakeController(final PendingState _fixed) extends PendingController {
   @override
   Stream<PendingState> build() async* {
     yield _fixed;

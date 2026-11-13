@@ -31,32 +31,22 @@ import '../../categories/views/category_display.dart';
 import '../view_models/home_providers.dart';
 
 @Dependencies([exchangeRates])
-class TransactionTile extends ConsumerWidget {
-  const TransactionTile({
-    super.key,
-    required this.transaction,
-    required this.category,
-    required this.locale,
-    required this.defaultCurrency,
-    required this.onTap,
-  });
-
-  final Transaction transaction;
+class const TransactionTile({
+  super.key,
+  required final Transaction transaction,
 
   /// Resolved category — null when the metadata lookup is still loading
   /// or the row references a deleted category. Tile renders a neutral
   /// fallback in that case so the list never blank-rows.
-  final Category? category;
-
-  final String locale;
+  required final Category? category,
+  required final String locale,
 
   /// ISO 4217 code of the user's preferred default currency. Provided
   /// synchronously by the parent so the tile does not flicker through a
   /// `'USD'` fallback on cold start.
-  final String defaultCurrency;
-
-  final VoidCallback onTap;
-
+  required final String defaultCurrency,
+  required final VoidCallback onTap,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

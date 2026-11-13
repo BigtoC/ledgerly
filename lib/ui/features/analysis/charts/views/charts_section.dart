@@ -38,9 +38,7 @@ import 'selected_slice_items_list.dart';
   chartsRange,
   chartsDateBounds,
 ])
-class ChartsSection extends ConsumerStatefulWidget {
-  const ChartsSection({super.key});
-
+class const ChartsSection({super.key}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<ChartsSection> createState() => _ChartsSectionState();
 }
@@ -429,17 +427,11 @@ class _ChartsSectionState extends ConsumerState<ChartsSection>
 }
 
 @Dependencies([ChartsSelectionController, analysisAccountsById])
-class _ChartBody extends ConsumerStatefulWidget {
-  const _ChartBody({
-    required this.data,
-    required this.locale,
-    required this.currencies,
-  });
-
-  final ChartsData data;
-  final String locale;
-  final Map<String, Currency> currencies;
-
+class const _ChartBody({
+  required final ChartsData data,
+  required final String locale,
+  required final Map<String, Currency> currencies,
+}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<_ChartBody> createState() => _ChartBodyState();
 }

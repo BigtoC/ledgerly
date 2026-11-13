@@ -18,9 +18,7 @@ import '../view_models/pending_state.dart';
 import 'pending_section.dart';
 
 @Dependencies([PendingController])
-class PendingTransactionsScreen extends ConsumerWidget {
-  const PendingTransactionsScreen({super.key});
-
+class const PendingTransactionsScreen({super.key}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

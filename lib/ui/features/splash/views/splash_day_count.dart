@@ -9,11 +9,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../l10n/app_localizations.dart';
 
-class SplashDayCount extends StatelessWidget {
-  const SplashDayCount({required this.count, super.key});
-
-  final int count;
-
+class const SplashDayCount({required final int count, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

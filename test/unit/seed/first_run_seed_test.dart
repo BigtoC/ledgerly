@@ -18,16 +18,14 @@ import 'package:ledgerly/domain/models/category.dart';
 import '../repositories/_harness/test_app_database.dart';
 
 /// Bundles real `Drift*Repository` instances against an in-memory DB.
-class _SeedHarness {
-  _SeedHarness._(
-    this.db,
-    this.currencies,
-    this.categories,
-    this.accountTypes,
-    this.accounts,
-    this.preferences,
-  );
-
+class _SeedHarness._(
+  final AppDatabase db,
+  final CurrencyRepository currencies,
+  final CategoryRepository categories,
+  final AccountTypeRepository accountTypes,
+  final AccountRepository accounts,
+  final UserPreferencesRepository preferences,
+) {
   factory _SeedHarness.fresh() {
     final db = newTestAppDatabase();
     final currencies = DriftCurrencyRepository(db);
@@ -44,13 +42,6 @@ class _SeedHarness {
       preferences,
     );
   }
-
-  final AppDatabase db;
-  final CurrencyRepository currencies;
-  final CategoryRepository categories;
-  final AccountTypeRepository accountTypes;
-  final AccountRepository accounts;
-  final UserPreferencesRepository preferences;
 
   Future<void> seed(String locale) => runFirstRunSeed(
     db: db,
@@ -440,6 +431,7 @@ void main() {
 /// Domain-local sentinel for the injected-failure test.
 class _InjectedSeedFailure implements Exception {
   const _InjectedSeedFailure();
+
   @override
   String toString() => '_InjectedSeedFailure';
 }
@@ -447,11 +439,10 @@ class _InjectedSeedFailure implements Exception {
 /// Wraps a real [CategoryRepository] and throws on the N-th
 /// `upsertSeeded` call. Used to prove transactional atomicity
 /// (risk-4 guardrail, Stream C plan §9.1).
-class _ThrowingCategoryRepository implements CategoryRepository {
-  _ThrowingCategoryRepository(this._inner, {required this.throwOnNthCall});
-
-  final CategoryRepository _inner;
-  final int throwOnNthCall;
+class _ThrowingCategoryRepository(
+  final CategoryRepository _inner, {
+  required final int throwOnNthCall,
+}) implements CategoryRepository {
   int _calls = 0;
 
   @override

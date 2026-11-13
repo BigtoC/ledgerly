@@ -22,9 +22,7 @@ import '../view_models/recurring_rules_controller.dart';
 import '../view_models/recurring_rules_state.dart';
 
 @Dependencies([RecurringRulesController])
-class RecurringRulesScreen extends ConsumerStatefulWidget {
-  const RecurringRulesScreen({super.key});
-
+class const RecurringRulesScreen({super.key}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<RecurringRulesScreen> createState() =>
       _RecurringRulesScreenState();
@@ -99,11 +97,8 @@ class _RecurringRulesScreenState extends ConsumerState<RecurringRulesScreen> {
 }
 
 @Dependencies([RecurringRulesController])
-class _RuleList extends ConsumerWidget {
-  const _RuleList({required this.rules});
-
-  final List<RecurringRule> rules;
-
+class const _RuleList({required final List<RecurringRule> rules})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -179,27 +174,18 @@ class _RuleList extends ConsumerWidget {
   }
 }
 
-class _RuleTile extends StatelessWidget {
-  const _RuleTile({
-    super.key,
-    required this.rule,
-    required this.category,
-    required this.onTap,
-    required this.onPause,
-    required this.onResume,
-    required this.onDelete,
-  });
-
-  final RecurringRule rule;
+class const _RuleTile({
+  super.key,
+  required final RecurringRule rule,
 
   /// Null while the lookup loads or when the category no longer exists;
   /// the tile then shows a neutral icon, as Home's `TransactionTile` does.
-  final Category? category;
-  final VoidCallback onTap;
-  final VoidCallback onPause;
-  final VoidCallback onResume;
-  final VoidCallback onDelete;
-
+  required final Category? category,
+  required final VoidCallback onTap,
+  required final VoidCallback onPause,
+  required final VoidCallback onResume,
+  required final VoidCallback onDelete,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -282,10 +268,8 @@ class _RuleTile extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.l10n});
-  final AppLocalizations l10n;
-
+class const _EmptyState({required final AppLocalizations l10n})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -320,10 +304,8 @@ class _EmptyState extends StatelessWidget {
 }
 
 @Dependencies([RecurringRulesController])
-class _ErrorState extends ConsumerWidget {
-  const _ErrorState({required this.l10n});
-  final AppLocalizations l10n;
-
+class const _ErrorState({required final AppLocalizations l10n})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Center(

@@ -42,9 +42,7 @@ import 'shopping_list_item_labels.dart';
   shoppingListAccountById,
   shoppingListCurrencyByCode,
 ])
-class ShoppingListScreen extends ConsumerStatefulWidget {
-  const ShoppingListScreen({super.key});
-
+class const ShoppingListScreen({super.key}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<ShoppingListScreen> createState() => _ShoppingListScreenState();
 }
@@ -192,11 +190,8 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
 
 // ---------- Body widgets ----------
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onAddPressed});
-
-  final VoidCallback onAddPressed;
-
+class const _EmptyState({required final VoidCallback onAddPressed})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -228,17 +223,11 @@ class _EmptyState extends StatelessWidget {
   shoppingListAccountById,
   shoppingListCurrencyByCode,
 ])
-class _DataBody extends StatelessWidget {
-  const _DataBody({
-    required this.data,
-    required this.onDeleteItem,
-    required this.onTapItem,
-  });
-
-  final ShoppingListData data;
-  final void Function(int id) onDeleteItem;
-  final void Function(int id) onTapItem;
-
+class const _DataBody({
+  required final ShoppingListData data,
+  required final void Function(int id) onDeleteItem,
+  required final void Function(int id) onTapItem,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = data.items;
@@ -291,19 +280,12 @@ class _DataBody extends StatelessWidget {
   shoppingListAccountById,
   shoppingListCurrencyByCode,
 ])
-class _ShoppingListRow extends ConsumerWidget {
-  const _ShoppingListRow({
-    required this.item,
-    required this.canTap,
-    required this.onDelete,
-    required this.onTap,
-  });
-
-  final ShoppingListItem item;
-  final bool canTap;
-  final VoidCallback onDelete;
-  final VoidCallback onTap;
-
+class const _ShoppingListRow({
+  required final ShoppingListItem item,
+  required final bool canTap,
+  required final VoidCallback onDelete,
+  required final VoidCallback onTap,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -370,11 +352,8 @@ class _ShoppingListRow extends ConsumerWidget {
   }
 }
 
-class _ErrorSurface extends StatelessWidget {
-  const _ErrorSurface({required this.onRetry});
-
-  final VoidCallback onRetry;
-
+class const _ErrorSurface({required final VoidCallback onRetry})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

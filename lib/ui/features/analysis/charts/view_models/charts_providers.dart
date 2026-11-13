@@ -18,17 +18,12 @@ import '../../../../../domain/models/currency.dart';
 part 'charts_providers.g.dart';
 
 /// FX readiness + freshness snapshot for the active default currency.
-class ChartsFxStatus {
-  const ChartsFxStatus({
-    required this.defaultCurrencyCode,
-    required this.rates,
-  });
-
-  final String defaultCurrencyCode;
+class const ChartsFxStatus({
+  required final String defaultCurrencyCode,
 
   /// `from→default` keyed snapshot of converted-and-timestamped rates.
-  final Map<String, ExchangeRateMetadata> rates;
-
+  required final Map<String, ExchangeRateMetadata> rates,
+}) {
   /// Forward rate lookup for `from → defaultCurrency`. Returns 1e9 when
   /// `from == defaultCurrency` (identity). Null when no row exists.
   int? scaledRate(String from) {

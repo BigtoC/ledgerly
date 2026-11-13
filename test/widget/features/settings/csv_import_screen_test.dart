@@ -25,12 +25,10 @@ import 'package:ledgerly/l10n/app_localizations.dart';
 
 import '../../../support/text_scale.dart';
 
-class _FakeCsvImportController extends CsvImportController {
-  _FakeCsvImportController(this._initial, this.calls);
-
-  final CsvImportState _initial;
-  final List<Object> calls;
-
+class _FakeCsvImportController(
+  final CsvImportState _initial,
+  final List<Object> calls,
+) extends CsvImportController {
   @override
   CsvImportState build() => _initial;
 

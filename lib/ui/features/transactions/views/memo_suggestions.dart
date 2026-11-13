@@ -11,16 +11,11 @@ import '../../../../l10n/app_localizations.dart';
 import '../view_models/transactions_providers.dart';
 import 'memo_picker_sheet.dart';
 
-class MemoSuggestions extends ConsumerWidget {
-  const MemoSuggestions({
-    super.key,
-    required this.categoryId,
-    required this.onSelected,
-  });
-
-  final int categoryId;
-  final ValueChanged<String> onSelected;
-
+class const MemoSuggestions({
+  super.key,
+  required final int categoryId,
+  required final ValueChanged<String> onSelected,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final memos =

@@ -30,30 +30,18 @@ import '../view_models/accounts_providers.dart';
 import '../view_models/accounts_state.dart';
 
 @Dependencies([exchangeRates, initialDefaultCurrency, defaultCurrency])
-class AccountTile extends ConsumerWidget {
-  const AccountTile({
-    super.key,
-    required this.view,
-    required this.isDefault,
-    required this.locale,
-    required this.accountTypeLabel,
-    required this.onTap,
-    required this.onSetDefault,
-    required this.onArchive,
-    required this.onDelete,
-    required this.onArchiveBlocked,
-  });
-
-  final AccountWithBalance view;
-  final bool isDefault;
-  final String locale;
-  final String accountTypeLabel;
-  final VoidCallback onTap;
-  final VoidCallback onSetDefault;
-  final VoidCallback onArchive;
-  final VoidCallback onDelete;
-  final VoidCallback onArchiveBlocked;
-
+class const AccountTile({
+  super.key,
+  required final AccountWithBalance view,
+  required final bool isDefault,
+  required final String locale,
+  required final String accountTypeLabel,
+  required final VoidCallback onTap,
+  required final VoidCallback onSetDefault,
+  required final VoidCallback onArchive,
+  required final VoidCallback onDelete,
+  required final VoidCallback onArchiveBlocked,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -294,10 +282,8 @@ class AccountTile extends ConsumerWidget {
   }
 }
 
-class _DefaultBadge extends StatelessWidget {
-  const _DefaultBadge({required this.label});
-  final String label;
-
+class const _DefaultBadge({required final String label})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -315,21 +301,13 @@ class _DefaultBadge extends StatelessWidget {
   }
 }
 
-class _TrailingActions extends StatelessWidget {
-  const _TrailingActions({
-    required this.view,
-    required this.isDefault,
-    required this.onSetDefault,
-    required this.onArchive,
-    required this.onDelete,
-  });
-
-  final AccountWithBalance view;
-  final bool isDefault;
-  final VoidCallback onSetDefault;
-  final VoidCallback onArchive;
-  final VoidCallback onDelete;
-
+class const _TrailingActions({
+  required final AccountWithBalance view,
+  required final bool isDefault,
+  required final VoidCallback onSetDefault,
+  required final VoidCallback onArchive,
+  required final VoidCallback onDelete,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

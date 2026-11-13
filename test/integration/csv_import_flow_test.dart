@@ -35,11 +35,7 @@ import 'package:ledgerly/ui/features/settings/views/settings_screen.dart';
 
 import '../support/test_app.dart';
 
-class _FakeCsvFileService implements CsvFileService {
-  _FakeCsvFileService(this._bytes);
-
-  final Uint8List _bytes;
-
+class _FakeCsvFileService(final Uint8List _bytes) implements CsvFileService {
   @override
   Future<PickedFile?> pick() async =>
       (name: 'import_fortune_city_data.csv', bytes: _bytes);

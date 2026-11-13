@@ -30,9 +30,8 @@ import 'repository_exceptions.dart';
 import 'transaction_repository.dart';
 
 /// Typed exception for shopping-list repository failures.
-class ShoppingListRepositoryException extends RepositoryException {
-  const ShoppingListRepositoryException(super.message);
-}
+class const ShoppingListRepositoryException(super.message)
+    extends RepositoryException;
 
 /// SSOT for `shopping_list_items`.
 abstract class ShoppingListRepository {

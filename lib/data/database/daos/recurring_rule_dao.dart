@@ -11,10 +11,9 @@ part 'recurring_rule_dao.g.dart';
 /// reference validation) live in `RecurringRulesRepository`. This DAO
 /// returns Drift rows only.
 @DriftAccessor(tables: [RecurringRules])
-class RecurringRuleDao extends DatabaseAccessor<AppDatabase>
+class RecurringRuleDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$RecurringRuleDaoMixin {
-  RecurringRuleDao(super.db);
-
   /// All non-archived rules: active first, then ordered by next_due_date
   /// ascending; paused rules sort to the end by name.
   Stream<List<RecurringRuleRow>> watchActive() {

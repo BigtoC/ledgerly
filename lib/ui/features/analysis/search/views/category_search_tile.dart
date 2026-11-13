@@ -11,18 +11,12 @@ import '../../../../../l10n/app_localizations.dart';
 import '../../../categories/views/category_display.dart';
 import '../view_models/analysis_state.dart';
 
-class CategorySearchTile extends StatelessWidget {
-  const CategorySearchTile({
-    super.key,
-    required this.result,
-    required this.query,
-    required this.locale,
-  });
-
-  final CategorySearchResult result;
-  final String query;
-  final String locale;
-
+class const CategorySearchTile({
+  super.key,
+  required final CategorySearchResult result,
+  required final String query,
+  required final String locale,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

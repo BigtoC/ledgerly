@@ -43,11 +43,8 @@ Future<void> showCategoryFormSheet(BuildContext context, {Category? initial}) {
 }
 
 @Dependencies([CategoriesController])
-class _CategoryFormSheet extends ConsumerStatefulWidget {
-  const _CategoryFormSheet({this.initial});
-
-  final Category? initial;
-
+class const _CategoryFormSheet({final Category? initial})
+    extends ConsumerStatefulWidget {
   @override
   ConsumerState<_CategoryFormSheet> createState() => _CategoryFormSheetState();
 }
@@ -275,10 +272,8 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
   }
 }
 
-class _FieldHeader extends StatelessWidget {
-  const _FieldHeader({required this.label});
-  final String label;
-
+class const _FieldHeader({required final String label})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Text(label, style: Theme.of(context).textTheme.titleSmall);

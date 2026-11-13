@@ -17,10 +17,9 @@ part 'exchange_rate_dao.g.dart';
 @DriftAccessor(
   tables: [ExchangeRates, Accounts, Transactions, PendingTransactions],
 )
-class ExchangeRateDao extends DatabaseAccessor<AppDatabase>
+class ExchangeRateDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$ExchangeRateDaoMixin {
-  ExchangeRateDao(super.db);
-
   /// Watch all exchange-rate rows. Emits on every change to the table.
   Stream<List<ExchangeRateRow>> watchAll() {
     return select(exchangeRates).watch();

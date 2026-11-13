@@ -78,10 +78,8 @@ RecurringRule _rule({
   updatedAt: DateTime(2026, 1, 1),
 );
 
-class _FakeController extends RecurringRulesController {
-  _FakeController(this._fixed);
-  final RecurringRulesState _fixed;
-
+class _FakeController(final RecurringRulesState _fixed)
+    extends RecurringRulesController {
   @override
   Stream<RecurringRulesState> build() async* {
     yield _fixed;

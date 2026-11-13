@@ -11,17 +11,13 @@ import 'dimension_toggle.dart' show RedirectToCenter;
 /// A 44-high hit target holding a 32-high pill: the filtered account's
 /// name (or "All accounts") and a chevron. Opens the account sheet through
 /// [onPressed].
-class AccountFilterButton extends StatelessWidget {
-  const AccountFilterButton({
-    super.key,
-    required this.accountName,
-    required this.onPressed,
-  });
+class const AccountFilterButton({
+  super.key,
 
   /// The filtered account's name; null when no account filter is set.
-  final String? accountName;
-  final VoidCallback onPressed;
-
+  required final String? accountName,
+  required final VoidCallback onPressed,
+}) extends StatelessWidget {
   /// Narrowest the button can draw without overflowing: the 2 px button
   /// padding each side, the 1 px border, 12 + 8 pill padding, the 4 gap and
   /// the 16 icon, with no room left for the label.

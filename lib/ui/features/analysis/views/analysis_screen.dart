@@ -39,9 +39,7 @@ import 'analysis_search_field.dart';
   chartsRange,
   chartsDateBounds,
 ])
-class AnalysisScreen extends ConsumerStatefulWidget {
-  const AnalysisScreen({super.key});
-
+class const AnalysisScreen({super.key}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<AnalysisScreen> createState() => _AnalysisScreenState();
 }

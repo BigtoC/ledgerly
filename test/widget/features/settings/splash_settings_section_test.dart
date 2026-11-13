@@ -34,10 +34,8 @@ class _MockUserPreferencesRepository extends Mock
 final _genericError = lookupAppLocalizations(const Locale('en'))
     .errorSnackbarGeneric;
 
-class _FakeSettingsController extends SettingsController {
-  _FakeSettingsController(this._fixed);
-  final SettingsState _fixed;
-
+class _FakeSettingsController(final SettingsState _fixed)
+    extends SettingsController {
   @override
   Stream<SettingsState> build() async* {
     yield _fixed;

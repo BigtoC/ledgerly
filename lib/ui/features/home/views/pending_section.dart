@@ -40,9 +40,7 @@ const int _kPendingCollapseThreshold = 5;
 
 /// Sliver that renders the pending approval section on HomeScreen.
 @Dependencies([PendingController, HomeController])
-class PendingSection extends ConsumerStatefulWidget {
-  const PendingSection({super.key});
-
+class const PendingSection({super.key}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<PendingSection> createState() => _PendingSectionState();
 }
@@ -178,10 +176,8 @@ class _PendingSectionState extends ConsumerState<PendingSection> {
 /// Inline load-error banner. We use a plain Container instead of
 /// MaterialBanner because MaterialBanner forces a non-empty `actions`
 /// list (the ~48 px row appears even with `[SizedBox.shrink()]`).
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-  final String message;
-
+class const _ErrorBanner({required final String message})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -218,28 +214,19 @@ class _ErrorBanner extends StatelessWidget {
 }
 
 /// Single pending-row tile with Approve circle + swipe-left Skip.
-class PendingTile extends StatelessWidget {
-  const PendingTile({
-    super.key,
-    required this.item,
-    required this.category,
-    required this.account,
-    required this.locale,
-    required this.onApprove,
-    required this.onSkip,
-  });
-
-  final PendingTransaction item;
-  final Category? category;
-  final Account? account;
-  final String locale;
+class const PendingTile({
+  super.key,
+  required final PendingTransaction item,
+  required final Category? category,
+  required final Account? account,
+  required final String locale,
 
   /// Returns `true` on success and `false` on failure so the approve
   /// circle can reverse its 200 ms green animation when the underlying
   /// call fails.
-  final Future<bool> Function() onApprove;
-  final VoidCallback onSkip;
-
+  required final Future<bool> Function() onApprove,
+  required final VoidCallback onSkip,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -333,15 +320,10 @@ class PendingTile extends StatelessWidget {
 /// 36×36 circle Approve button with 200ms grey→green animation.
 /// Debounces rapid taps via `_approving` flag. On failure the controller
 /// returns `false` and the animation reverses (green → grey).
-class _ApproveCircleButton extends StatefulWidget {
-  const _ApproveCircleButton({
-    required this.onApproveAsync,
-    required this.semanticsLabel,
-  });
-
-  final Future<bool> Function() onApproveAsync;
-  final String semanticsLabel;
-
+class const _ApproveCircleButton({
+  required final Future<bool> Function() onApproveAsync,
+  required final String semanticsLabel,
+}) extends StatefulWidget {
   @override
   State<_ApproveCircleButton> createState() => _ApproveCircleButtonState();
 }

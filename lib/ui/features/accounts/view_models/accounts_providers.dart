@@ -51,20 +51,13 @@ final currenciesByCodeProvider =
       );
     }, dependencies: [currencyRepositoryProvider]);
 
-class AccountFormSeedData {
-  const AccountFormSeedData({
-    this.account,
-    this.accountType,
-    this.defaultCurrency,
-    this.isMissing = false,
-  });
-
+class const AccountFormSeedData({
+  final Account? account,
+  final AccountType? accountType,
+  final Currency? defaultCurrency,
+  final bool isMissing = false,
+}) {
   const AccountFormSeedData.missing() : this(isMissing: true);
-
-  final Account? account;
-  final AccountType? accountType;
-  final Currency? defaultCurrency;
-  final bool isMissing;
 }
 
 final accountFormSeedDataProvider = FutureProvider.autoDispose
@@ -97,12 +90,10 @@ final accountFormSeedDataProvider = FutureProvider.autoDispose
     );
 
 @Dependencies([initialDefaultCurrency, defaultCurrency, exchangeRateRepository])
-class AccountFormActions {
-  AccountFormActions(this._accountRepository, this._ref);
-
-  final AccountRepository _accountRepository;
-  final Ref _ref;
-
+class AccountFormActions(
+  final AccountRepository _accountRepository,
+  final Ref _ref,
+) {
   final _pendingCodes = <String>{};
   Timer? _debounce;
   static const _debounceWindow = Duration(seconds: 30);
@@ -161,11 +152,7 @@ final accountFormActionsProvider = Provider<AccountFormActions>(
   ],
 );
 
-class AccountTypeCreationActions {
-  AccountTypeCreationActions(this._repository);
-
-  final AccountTypeRepository _repository;
-
+class AccountTypeCreationActions(final AccountTypeRepository _repository) {
   /// Creates a custom account type and never throws; the sheet switches
   /// on the outcome.
   Future<CreateAccountTypeOutcome> create({

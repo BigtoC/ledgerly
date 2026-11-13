@@ -23,7 +23,8 @@ PR #135 removed 2,831 lines (1,614 hand-written `lib/` lines) without changing b
   - `test/support/` (`test_app.dart`, `textScaleBuilder`)
 
   If one almost fits, extend it rather than copy it, but only when the extended helper plus your call is shorter than a local copy (count after `dart format`). Don't add a flag that only one caller sets just to merge an existing copy.
-- **What Dart, Flutter or Drift already does.** Use:
+- **What Dart, Flutter or Drift already does.** Before you write code, and after any SDK or dependency upgrade, check whether a feature of the Dart language, of Flutter or of a package in `pubspec.yaml` already does the job in less code. Read the release notes or changelog of the pinned version. Primary constructors (Dart 3.13, #154) were in the SDK for a whole release before anyone used them. Use:
+  - primary constructors and declaring parameters when a constructor only stores its arguments (`this.x`, `super.x`): `class const Foo({required final int count, super.key}) extends StatelessWidget`. Keep each field's doc comment on its parameter, and give a class whose fields all moved into the header a `;` body. Keep the classic constructor when the header would be an empty `()` (no fields, as with `const Foo();` or `const Foo._()`), when it needs an initializer list or a `this : super(...)` body, or when it saves no line after `dart format`. Don't enable the experimental `use_primary_constructors` lint, because it asks for those empty `()` headers.
   - `table.count(where:)`, not hand-rolled COUNT queries
   - `math.pow`, not loops
   - `DateTime(y, m + 1)` to roll month 13 into January, with no December special case. It rolls an overflowing day too, so clamp the day first, as `_clampDay` in `recurring_rules_repository.dart` does.

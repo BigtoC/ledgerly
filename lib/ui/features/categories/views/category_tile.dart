@@ -17,22 +17,14 @@ import '../../../../l10n/app_localizations.dart';
 import '../view_models/categories_state.dart';
 import 'category_display.dart';
 
-class CategoryTile extends StatelessWidget {
-  const CategoryTile({
-    super.key,
-    required this.view,
-    required this.index,
-    required this.onTap,
-    required this.onArchive,
-    required this.onDelete,
-  });
-
-  final CategoryRowView view;
-  final int index;
-  final VoidCallback onTap;
-  final VoidCallback onArchive;
-  final VoidCallback onDelete;
-
+class const CategoryTile({
+  super.key,
+  required final CategoryRowView view,
+  required final int index,
+  required final VoidCallback onTap,
+  required final VoidCallback onArchive,
+  required final VoidCallback onDelete,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

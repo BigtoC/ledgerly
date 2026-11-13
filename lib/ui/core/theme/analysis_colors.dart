@@ -9,30 +9,28 @@ import 'package:material_ui/material_ui.dart';
 
 /// Exact Analysis-screen colours, registered on `lightTheme` / `darkTheme`.
 @immutable
-class AnalysisColors extends ThemeExtension<AnalysisColors> {
-  const AnalysisColors({
-    required this.bg,
-    required this.card,
-    required this.line,
-    required this.outline,
-    required this.track,
-    required this.thumb,
-    required this.fg,
-    required this.fg2,
-    required this.fg3,
-    required this.off,
-    required this.sel,
-    required this.onBg,
-    required this.onFg,
-    required this.exp,
-    required this.expText,
-    required this.expTint,
-    required this.inc,
-    required this.incText,
-    required this.incTint,
-    required this.thumbShadow,
-  });
-
+class const AnalysisColors({
+  required final Color bg,
+  required final Color card,
+  required final Color line,
+  required final Color outline,
+  required final Color track,
+  required final Color thumb,
+  required final Color fg,
+  required final Color fg2,
+  required final Color fg3,
+  required final Color off,
+  required final Color sel,
+  required final Color onBg,
+  required final Color onFg,
+  required final Color exp,
+  required final Color expText,
+  required final Color expTint,
+  required final Color inc,
+  required final Color incText,
+  required final Color incTint,
+  required final List<BoxShadow> thumbShadow,
+}) extends ThemeExtension<AnalysisColors> {
   static const AnalysisColors light = AnalysisColors(
     bg: Color(0xFFF3F3F3),
     card: Color(0xFFFFFFFF),
@@ -101,27 +99,6 @@ class AnalysisColors extends ThemeExtension<AnalysisColors> {
   /// The active theme's tokens; both app themes register them.
   static AnalysisColors of(BuildContext context) =>
       Theme.of(context).extension<AnalysisColors>()!;
-
-  final Color bg;
-  final Color card;
-  final Color line;
-  final Color outline;
-  final Color track;
-  final Color thumb;
-  final Color fg;
-  final Color fg2;
-  final Color fg3;
-  final Color off;
-  final Color sel;
-  final Color onBg;
-  final Color onFg;
-  final Color exp;
-  final Color expText;
-  final Color expTint;
-  final Color inc;
-  final Color incText;
-  final Color incTint;
-  final List<BoxShadow> thumbShadow;
 
   @override
   AnalysisColors copyWith({

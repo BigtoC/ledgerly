@@ -44,19 +44,15 @@ const int _kDrilldownPageSize = 50;
   chartsCurrenciesByCode,
   chartsFxStatus,
 ])
-class SelectedSliceItemsList extends ConsumerStatefulWidget {
-  const SelectedSliceItemsList({
-    super.key,
-    required this.slice,
-    required this.locale,
-  });
+class const SelectedSliceItemsList({
+  super.key,
 
   /// The currently-selected chart slice (looked up by `selectionKey` in
   /// the parent so the list header total stays in lockstep with the pie
   /// slice's labeled amount).
-  final ChartSlice slice;
-  final String locale;
-
+  required final ChartSlice slice,
+  required final String locale,
+}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<SelectedSliceItemsList> createState() =>
       _SelectedSliceItemsListState();
@@ -353,31 +349,18 @@ class _SelectedSliceItemsListState
   }
 }
 
-class _ListHeader extends StatelessWidget {
-  const _ListHeader({
-    required this.label,
-    required this.color,
-    required this.count,
-    required this.totalMinorUnits,
-    required this.currencyCode,
-    required this.currenciesByCode,
-    required this.locale,
-    required this.l10n,
-    required this.showStaleRates,
-    required this.onClose,
-  });
-
-  final String label;
-  final Color color;
-  final int count;
-  final int totalMinorUnits;
-  final String currencyCode;
-  final Map<String, Currency> currenciesByCode;
-  final String locale;
-  final AppLocalizations l10n;
-  final bool showStaleRates;
-  final VoidCallback onClose;
-
+class const _ListHeader({
+  required final String label,
+  required final Color color,
+  required final int count,
+  required final int totalMinorUnits,
+  required final String currencyCode,
+  required final Map<String, Currency> currenciesByCode,
+  required final String locale,
+  required final AppLocalizations l10n,
+  required final bool showStaleRates,
+  required final VoidCallback onClose,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -478,12 +461,10 @@ class _ListHeader extends StatelessWidget {
 
 /// `See categories in <Account>`: an outlined 44-high pill under the
 /// header. Main.dc.html lines 205-211.
-class _BridgeButton extends StatelessWidget {
-  const _BridgeButton({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
+class const _BridgeButton({
+  required final String label,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);

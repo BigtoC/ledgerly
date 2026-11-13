@@ -21,35 +21,27 @@ part 'charts_net_total_providers.g.dart';
 
 /// Expense, income and net for the selected period, in [currency] minor
 /// units.
-class ChartsNetTotal {
-  const ChartsNetTotal({
-    required this.currency,
-    required this.expenseMinorUnits,
-    required this.incomeMinorUnits,
-    required this.netMinorUnits,
-    required this.excludedCurrencyCodes,
-  });
-
+class const ChartsNetTotal({
   /// The default currency the totals are expressed in.
-  final Currency currency;
+  required final Currency currency,
 
   /// Converted expense total (non-negative). Null when every currency
   /// carrying expense in the period lacks a rate.
-  final int? expenseMinorUnits;
+  required final int? expenseMinorUnits,
 
   /// Converted income total (non-negative). Null when every currency
   /// carrying income in the period lacks a rate.
-  final int? incomeMinorUnits;
+  required final int? incomeMinorUnits,
 
   /// Income minus expense; negative when spending exceeds income. Null
   /// when every currency in the period lacks a rate, so there is nothing
   /// to show rather than a misleading zero.
-  final int? netMinorUnits;
+  required final int? netMinorUnits,
 
   /// Currencies left out of all three totals because their exchange rate
   /// is missing, sorted.
-  final List<String> excludedCurrencyCodes;
-}
+  required final List<String> excludedCurrencyCodes,
+});
 
 /// Per-currency expense and income for the selected period's
 /// `[start, end)` range, limited to the filtered account when one is set.

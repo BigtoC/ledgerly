@@ -58,10 +58,8 @@ CategoryRowView _row(
   CategoryRowAffordance affordance = CategoryRowAffordance.archive,
 ]) => CategoryRowView(category: c, affordance: affordance);
 
-class _FakeCategoriesController extends CategoriesController {
-  _FakeCategoriesController(this._fixed);
-  final CategoriesState _fixed;
-
+class _FakeCategoriesController(final CategoriesState _fixed)
+    extends CategoriesController {
   @override
   Stream<CategoriesState> build() async* {
     yield _fixed;

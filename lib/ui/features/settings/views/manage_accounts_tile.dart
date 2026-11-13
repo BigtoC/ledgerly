@@ -21,9 +21,7 @@ import 'manage_accounts_sheet.dart';
   initialDefaultCurrency,
   defaultCurrency,
 ])
-class ManageAccountsTile extends ConsumerWidget {
-  const ManageAccountsTile({super.key});
-
+class const ManageAccountsTile({super.key}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

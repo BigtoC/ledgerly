@@ -10,10 +10,9 @@ part 'currency_dao.g.dart';
 /// Business rules (archive, rename, seed, locale-to-currency default)
 /// live in `CurrencyRepository` (M3). This DAO returns Drift rows only.
 @DriftAccessor(tables: [Currencies])
-class CurrencyDao extends DatabaseAccessor<AppDatabase>
+class CurrencyDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$CurrencyDaoMixin {
-  CurrencyDao(super.db);
-
   /// Watch all currencies. Ordered by `sort_order` (NULLs last), then
   /// `code` ascending — the shape expected by currency pickers.
   Stream<List<Currency>> watchAll() {

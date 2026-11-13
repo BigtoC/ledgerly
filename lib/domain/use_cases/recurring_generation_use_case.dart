@@ -13,17 +13,11 @@ import '../../data/repositories/pending_transaction_repository.dart';
 import '../../data/repositories/recurring_rules_repository.dart';
 import '../models/recurring_rule.dart';
 
-class RecurringGenerationUseCase {
-  RecurringGenerationUseCase({
-    required this.recurringRepo,
-    required this.pendingRepo,
-    required this.db,
-  });
-
-  final RecurringRulesRepository recurringRepo;
-  final PendingTransactionRepository pendingRepo;
-  final AppDatabase db;
-
+class RecurringGenerationUseCase({
+  required final RecurringRulesRepository recurringRepo,
+  required final PendingTransactionRepository pendingRepo,
+  required final AppDatabase db,
+}) {
   /// Hard cap on per-rule generations in a single pass. Daily rules that
   /// have been silent for >12 days fast-forward to "today" and surface a
   /// cap-hit signal in the outcome.
@@ -156,15 +150,13 @@ class RecurringGenerationUseCase {
 }
 
 /// Outcome of generating for a single rule.
-class RecurringGenerationOutcome {
-  const RecurringGenerationOutcome({
-    required this.ruleId,
-    required this.generated,
-    required this.capped,
-    this.failed = false,
-    this.skipped = false,
-  });
-
+class const RecurringGenerationOutcome({
+  required final int ruleId,
+  required final int generated,
+  required final bool capped,
+  final bool failed = false,
+  final bool skipped = false,
+}) {
   factory RecurringGenerationOutcome.failed(int ruleId) =>
       RecurringGenerationOutcome(
         ruleId: ruleId,
@@ -180,16 +172,9 @@ class RecurringGenerationOutcome {
         capped: false,
         skipped: true,
       );
-
-  final int ruleId;
-  final int generated;
-  final bool capped;
-  final bool failed;
-  final bool skipped;
 }
 
 /// Aggregate result of a generation pass (bootstrap or runtime).
-class RecurringGenerationResult {
-  const RecurringGenerationResult({required this.outcomes});
-  final List<RecurringGenerationOutcome> outcomes;
-}
+class const RecurringGenerationResult({
+  required final List<RecurringGenerationOutcome> outcomes,
+});

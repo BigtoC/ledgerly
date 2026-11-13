@@ -9,12 +9,11 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/utils/date_helpers.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class DateField extends StatelessWidget {
-  const DateField({super.key, required this.value, required this.onChanged});
-
-  final DateTime value;
-  final ValueChanged<DateTime> onChanged;
-
+class const DateField({
+  super.key,
+  required final DateTime value,
+  required final ValueChanged<DateTime> onChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

@@ -226,11 +226,10 @@ class AnalysisController extends _$AnalysisController {
   }
 }
 
-class _Bucket {
-  _Bucket({required this.currency, required this.mostRecentDate});
-
-  final Currency currency;
-  DateTime mostRecentDate;
+class _Bucket({
+  required final Currency currency,
+  required var DateTime mostRecentDate,
+}) {
   int count = 0;
   int totalMinor = 0;
 }

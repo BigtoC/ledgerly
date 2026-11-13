@@ -84,11 +84,10 @@ AccountWithBalance _wb(
   affordance: affordance,
 );
 
-class _FakeAccountsController extends AccountsController {
-  _FakeAccountsController(this._fixed, [this._updates]);
-  final AccountsState _fixed;
-  final Stream<AccountsState>? _updates;
-
+class _FakeAccountsController(
+  final AccountsState _fixed, [
+  final Stream<AccountsState>? _updates,
+]) extends AccountsController {
   @override
   Stream<AccountsState> build() async* {
     yield _fixed;

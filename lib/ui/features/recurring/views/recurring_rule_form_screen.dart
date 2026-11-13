@@ -27,11 +27,8 @@ import '../view_models/recurring_rule_form_controller.dart';
 import '../view_models/recurring_rule_form_state.dart';
 
 @Dependencies([RecurringRuleFormController, categoriesByType])
-class RecurringRuleFormScreen extends ConsumerStatefulWidget {
-  const RecurringRuleFormScreen({super.key, this.ruleId});
-
-  final int? ruleId;
-
+class const RecurringRuleFormScreen({super.key, final int? ruleId})
+    extends ConsumerStatefulWidget {
   @override
   ConsumerState<RecurringRuleFormScreen> createState() =>
       _RecurringRuleFormScreenState();
@@ -96,19 +93,12 @@ class _RecurringRuleFormScreenState
 }
 
 @Dependencies([categoriesByType])
-class _FormBody extends StatelessWidget {
-  const _FormBody({
-    required this.state,
-    required this.controller,
-    required this.memoCtl,
-    required this.dayOfMonthCtl,
-  });
-
-  final RecurringRuleFormState state;
-  final RecurringRuleFormController controller;
-  final TextEditingController memoCtl;
-  final TextEditingController dayOfMonthCtl;
-
+class const _FormBody({
+  required final RecurringRuleFormState state,
+  required final RecurringRuleFormController controller,
+  required final TextEditingController memoCtl,
+  required final TextEditingController dayOfMonthCtl,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -310,9 +300,8 @@ class _FormBody extends StatelessWidget {
   }
 }
 
-class _FormErrorBanner extends StatelessWidget {
-  const _FormErrorBanner({required this.message});
-  final String message;
+class const _FormErrorBanner({required final String message})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -334,17 +323,11 @@ class _FormErrorBanner extends StatelessWidget {
   }
 }
 
-class _FrequencyFields extends StatelessWidget {
-  const _FrequencyFields({
-    required this.state,
-    required this.controller,
-    required this.dayOfMonthCtl,
-  });
-
-  final RecurringRuleFormState state;
-  final RecurringRuleFormController controller;
-  final TextEditingController dayOfMonthCtl;
-
+class const _FrequencyFields({
+  required final RecurringRuleFormState state,
+  required final RecurringRuleFormController controller,
+  required final TextEditingController dayOfMonthCtl,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -401,17 +384,11 @@ class _FrequencyFields extends StatelessWidget {
   }
 }
 
-class _DayOfMonthRow extends StatelessWidget {
-  const _DayOfMonthRow({
-    required this.state,
-    required this.controller,
-    required this.dayOfMonthCtl,
-  });
-
-  final RecurringRuleFormState state;
-  final RecurringRuleFormController controller;
-  final TextEditingController dayOfMonthCtl;
-
+class const _DayOfMonthRow({
+  required final RecurringRuleFormState state,
+  required final RecurringRuleFormController controller,
+  required final TextEditingController dayOfMonthCtl,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -474,12 +451,10 @@ class _DayOfMonthRow extends StatelessWidget {
 /// transactions slice — both forms pick from the same expense-category
 /// universe and want the same affordance.
 @Dependencies([categoriesByType])
-class _CategoryPickerTile extends ConsumerWidget {
-  const _CategoryPickerTile({required this.state, required this.onPick});
-
-  final RecurringRuleFormState state;
-  final void Function(Category) onPick;
-
+class const _CategoryPickerTile({
+  required final RecurringRuleFormState state,
+  required final void Function(Category) onPick,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncCategories = ref.watch(
@@ -514,12 +489,10 @@ class _CategoryPickerTile extends ConsumerWidget {
 /// Tile that opens the shared account picker and renders the selected
 /// account once chosen. Reuses [AccountSelectorTile] from the
 /// transactions slice for visual parity.
-class _AccountPickerTile extends ConsumerWidget {
-  const _AccountPickerTile({required this.state, required this.onPick});
-
-  final RecurringRuleFormState state;
-  final void Function(Account) onPick;
-
+class const _AccountPickerTile({
+  required final RecurringRuleFormState state,
+  required final void Function(Account) onPick,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncAccounts = ref.watch(txActiveAccountsProvider);

@@ -38,9 +38,8 @@ import 'repository_exceptions.dart';
 /// Generic transaction-layer failure — used for "transaction not found"
 /// paths that do not deserve a dedicated typed subclass. Kept
 /// Stream-A-local per §1.3.
-class TransactionRepositoryException extends RepositoryException {
-  const TransactionRepositoryException(super.message);
-}
+class const TransactionRepositoryException(super.message)
+    extends RepositoryException;
 
 /// Fields CSV import compares to find rows that already exist. See
 /// [TransactionRepository.getImportSignatures].

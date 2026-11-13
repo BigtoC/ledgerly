@@ -26,35 +26,27 @@ import '../../../../domain/models/transaction.dart';
 import '../../../../l10n/app_localizations.dart';
 
 @Dependencies([exchangeRates])
-class SummaryStrip extends ConsumerWidget {
-  const SummaryStrip({
-    super.key,
-    required this.todayTotalsByCurrency,
-    required this.monthNetByCurrency,
-    required this.currenciesByCode,
-    required this.locale,
-    required this.defaultCurrency,
-  });
+class const SummaryStrip({
+  super.key,
 
   /// Selected-day's per-currency expense/income split.
-  final DailyTotals todayTotalsByCurrency;
+  required final DailyTotals todayTotalsByCurrency,
 
   /// Month-to-date net per currency for the selected day's month.
-  final Map<String, int> monthNetByCurrency;
+  required final Map<String, int> monthNetByCurrency,
 
   /// Resolves a currency code to its metadata so [MoneyFormatter] can
   /// render `decimals` correctly. Codes missing from this map fall back
   /// to a 2-decimal placeholder so a transient gap (e.g. metadata still
   /// loading) does not crash the strip.
-  final Map<String, Currency> currenciesByCode;
-
-  final String locale;
+  required final Map<String, Currency> currenciesByCode,
+  required final String locale,
 
   /// ISO 4217 code of the user's preferred default currency. Provided
   /// synchronously by the parent so the strip does not flicker through a
   /// `'USD'` fallback on cold start.
-  final String defaultCurrency;
-
+  required final String defaultCurrency,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -191,23 +183,14 @@ class SummaryStrip extends ConsumerWidget {
   }
 }
 
-class _CurrencyGroup extends StatelessWidget {
-  const _CurrencyGroup({
-    required this.currency,
-    required this.expense,
-    required this.income,
-    required this.monthNet,
-    required this.locale,
-    required this.isApproximate,
-  });
-
-  final Currency currency;
-  final int expense;
-  final int income;
-  final int monthNet;
-  final String locale;
-  final bool isApproximate;
-
+class const _CurrencyGroup({
+  required final Currency currency,
+  required final int expense,
+  required final int income,
+  required final int monthNet,
+  required final String locale,
+  required final bool isApproximate,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -268,41 +251,26 @@ const _negativeDark = Color(0xFFFF8F8F);
 /// One formatted amount. [semanticValue] replaces the visible text for
 /// screen readers (spelling out the `≈` prefix); [color] defaults to
 /// `onSurface`.
-class _Figure {
-  const _Figure({
-    required this.text,
-    this.semanticValue,
-    this.color,
-    this.parts,
-  });
-
-  final String text;
-  final String? semanticValue;
-  final Color? color;
+class const _Figure({
+  required final String text,
+  final String? semanticValue,
+  final Color? color,
 
   /// When set, [text] renders in the design's mixed sizes.
-  final _AmountParts? parts;
-}
+  final _AmountParts? parts,
+});
 
 /// [_Figure.text] cut into the runs the design sizes separately: sign
 /// (with any `≈`), currency symbol, integer part, and decimal separator
 /// plus fraction. [trailing] holds a symbol that a locale puts after the
 /// number.
-class _AmountParts {
-  const _AmountParts({
-    required this.sign,
-    required this.symbol,
-    required this.integer,
-    required this.fraction,
-    required this.trailing,
-  });
-
-  final String sign;
-  final String symbol;
-  final String integer;
-  final String fraction;
-  final String trailing;
-
+class const _AmountParts({
+  required final String sign,
+  required final String symbol,
+  required final String integer,
+  required final String fraction,
+  required final String trailing,
+}) {
   static final _signRun = RegExp(r'^[≈+\-−\s]*');
 
   /// Locates [bare] (the unsigned number without symbol) inside [text].
@@ -330,21 +298,13 @@ class _AmountParts {
 
 /// Day net and month net side by side, a divider, the income/expense
 /// ratio bar (when [ratio] has activity) and the income and expense tiles.
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.dayNet,
-    required this.monthNet,
-    required this.income,
-    required this.expense,
-    this.ratio,
-  });
-
-  final _Figure dayNet;
-  final _Figure monthNet;
-  final _Figure income;
-  final _Figure expense;
-  final ({int income, int expense})? ratio;
-
+class const _SummaryCard({
+  required final _Figure dayNet,
+  required final _Figure monthNet,
+  required final _Figure income,
+  required final _Figure expense,
+  final ({int income, int expense})? ratio,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -421,19 +381,12 @@ class _SummaryCard extends StatelessWidget {
 
 /// Two equal-width columns side by side, or one above the other when
 /// [stacked].
-class _Pair extends StatelessWidget {
-  const _Pair({
-    required this.stacked,
-    required this.gap,
-    required this.first,
-    required this.second,
-  });
-
-  final bool stacked;
-  final double gap;
-  final Widget first;
-  final Widget second;
-
+class const _Pair({
+  required final bool stacked,
+  required final double gap,
+  required final Widget first,
+  required final Widget second,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (stacked) {
@@ -457,17 +410,11 @@ class _Pair extends StatelessWidget {
   }
 }
 
-class _NetFigure extends StatelessWidget {
-  const _NetFigure({
-    required this.label,
-    required this.figure,
-    required this.alignment,
-  });
-
-  final String label;
-  final _Figure figure;
-  final CrossAxisAlignment alignment;
-
+class const _NetFigure({
+  required final String label,
+  required final _Figure figure,
+  required final CrossAxisAlignment alignment,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -497,19 +444,12 @@ class _NetFigure extends StatelessWidget {
   }
 }
 
-class _FlowTile extends StatelessWidget {
-  const _FlowTile({
-    required this.label,
-    required this.figure,
-    required this.icon,
-    required this.accent,
-  });
-
-  final String label;
-  final _Figure figure;
-  final IconData icon;
-  final Color accent;
-
+class const _FlowTile({
+  required final String label,
+  required final _Figure figure,
+  required final IconData icon,
+  required final Color accent,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -558,17 +498,11 @@ class _FlowTile extends StatelessWidget {
   }
 }
 
-class _FigureText extends StatelessWidget {
-  const _FigureText({
-    required this.figure,
-    required this.textAlign,
-    required this.style,
-  });
-
-  final _Figure figure;
-  final TextAlign textAlign;
-  final TextStyle? style;
-
+class const _FigureText({
+  required final _Figure figure,
+  required final TextAlign textAlign,
+  required final TextStyle? style,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // One line always: a wrapped amount can strand its minus sign. A
@@ -640,19 +574,12 @@ class _FigureText extends StatelessWidget {
 
 /// Income share (left) against expense share (right). A side with no
 /// activity drops out, leaving one full-width segment.
-class _RatioBar extends StatelessWidget {
-  const _RatioBar({
-    required this.income,
-    required this.expense,
-    required this.incomeColor,
-    required this.expenseColor,
-  });
-
-  final int income;
-  final int expense;
-  final Color incomeColor;
-  final Color expenseColor;
-
+class const _RatioBar({
+  required final int income,
+  required final int expense,
+  required final Color incomeColor,
+  required final Color expenseColor,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

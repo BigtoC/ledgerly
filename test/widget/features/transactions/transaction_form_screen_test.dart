@@ -1543,6 +1543,7 @@ void main() {
 
 class _HomeStub extends StatelessWidget {
   const _HomeStub();
+
   @override
   Widget build(BuildContext context) =>
       const Scaffold(body: Center(child: Text('home-stub')));

@@ -11,10 +11,9 @@ part 'account_type_dao.g.dart';
 /// must reassign accounts before delete) live in
 /// `AccountTypeRepository` (M3). This DAO returns Drift rows only.
 @DriftAccessor(tables: [AccountTypes])
-class AccountTypeDao extends DatabaseAccessor<AppDatabase>
+class AccountTypeDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$AccountTypeDaoMixin {
-  AccountTypeDao(super.db);
-
   /// Watch every account type, optionally excluding archived rows.
   /// Ordered by `sort_order` (NULLs last), then `id` ascending.
   Stream<List<AccountTypeRow>> watchAll({bool includeArchived = false}) {

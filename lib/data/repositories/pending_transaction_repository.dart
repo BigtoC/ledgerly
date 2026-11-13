@@ -16,9 +16,8 @@ import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 import 'transaction_repository.dart';
 
-class PendingTransactionRepositoryException extends RepositoryException {
-  const PendingTransactionRepositoryException(super.message);
-}
+class const PendingTransactionRepositoryException(super.message)
+    extends RepositoryException;
 
 abstract class PendingTransactionRepository {
   /// Check if a pending row exists for the given recurring rule + date.
@@ -60,13 +59,10 @@ abstract class PendingTransactionRepository {
   Future<void> reject(int pendingId);
 }
 
-final class DriftPendingTransactionRepository
-    implements PendingTransactionRepository {
-  DriftPendingTransactionRepository(this._db, {required this._txRepo});
-
-  final drift.AppDatabase _db;
-  final TransactionRepository _txRepo;
-
+final class DriftPendingTransactionRepository(
+  final drift.AppDatabase _db, {
+  required final TransactionRepository _txRepo,
+}) implements PendingTransactionRepository {
   PendingTransactionDao get _dao => _db.pendingTransactionDao;
 
   @override

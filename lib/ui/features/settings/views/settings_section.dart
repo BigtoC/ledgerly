@@ -3,16 +3,11 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/constants.dart';
 import '../../../../core/utils/box_shadow.dart';
 
-class SettingsSection extends StatelessWidget {
-  const SettingsSection({
-    super.key,
-    required this.title,
-    required this.children,
-  });
-
-  final String title;
-  final List<Widget> children;
-
+class const SettingsSection({
+  super.key,
+  required final String title,
+  required final List<Widget> children,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

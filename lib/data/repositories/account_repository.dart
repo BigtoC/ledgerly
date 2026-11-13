@@ -37,9 +37,8 @@ import 'repository_exceptions.dart';
 
 /// Generic account-layer failure for stale/missing-row writes that do not map
 /// to one of the shared cross-stream repository exceptions.
-class AccountRepositoryException extends RepositoryException {
-  const AccountRepositoryException(super.message);
-}
+class const AccountRepositoryException(super.message)
+    extends RepositoryException;
 
 /// [AccountRepository.save] refused to change the currency of an account
 /// that a transaction or an active recurring rule already references.
@@ -123,12 +122,10 @@ abstract class AccountRepository {
 }
 
 /// Concrete Drift-backed implementation of [AccountRepository].
-final class DriftAccountRepository implements AccountRepository {
-  DriftAccountRepository(this._db, this._currencies);
-
-  final drift.AppDatabase _db;
-  final CurrencyRepository _currencies;
-
+final class DriftAccountRepository(
+  final drift.AppDatabase _db,
+  final CurrencyRepository _currencies,
+) implements AccountRepository {
   AccountDao get _dao => _db.accountDao;
   AccountTypeDao get _typeDao => _db.accountTypeDao;
   TransactionDao get _txDao => _db.transactionDao;

@@ -11,10 +11,9 @@ part 'category_dao.g.dart';
 /// l10n_key stability) live in `CategoryRepository` (M3). This DAO
 /// returns Drift rows only.
 @DriftAccessor(tables: [Categories])
-class CategoryDao extends DatabaseAccessor<AppDatabase>
+class CategoryDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$CategoryDaoMixin {
-  CategoryDao(super.db);
-
   /// Watch all categories, optionally excluding archived rows and
   /// optionally filtered by [type] (the raw string `'expense'` or
   /// `'income'`). Ordered by `sort_order` (NULLs last), then `id` ascending.

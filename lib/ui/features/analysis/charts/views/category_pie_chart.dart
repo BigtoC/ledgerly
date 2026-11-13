@@ -14,46 +14,33 @@ import '../view_models/charts_state.dart';
 /// its colour while the others fade, and the centre shows its label,
 /// amount and share. Selection is hoisted via [onSelectionChanged] so
 /// [ChartLegend] can mirror it.
-class CategoryPieChart extends StatefulWidget {
-  const CategoryPieChart({
-    super.key,
-    required this.slices,
-    required this.currenciesByCode,
-    required this.locale,
-    required this.type,
-    required this.dimension,
-    this.grandTotalMinorUnits,
-    this.displayCurrencyCode,
-    this.selectedIndex,
-    this.onSelectionChanged,
-    this.accountName,
-  });
-
-  final List<ChartSlice> slices;
-  final Map<String, Currency> currenciesByCode;
-  final String locale;
+class const CategoryPieChart({
+  super.key,
+  required final List<ChartSlice> slices,
+  required final Map<String, Currency> currenciesByCode,
+  required final String locale,
 
   /// Chart type, for the centre's "Total expense" / "of income" wording.
-  final CategoryType type;
+  required final CategoryType type,
 
   /// Grouping, for the centre's "N categories / accounts / currencies".
-  final ChartDimension dimension;
-  final int? grandTotalMinorUnits;
-  final String? displayCurrencyCode;
+  required final ChartDimension dimension,
+  final int? grandTotalMinorUnits,
+  final String? displayCurrencyCode,
 
   /// Externally-controlled selection (e.g. from legend taps). Null means
   /// no slice is highlighted. The chart is fully controlled — there is no
   /// internal fallback selection.
-  final int? selectedIndex;
+  final int? selectedIndex,
 
   /// Fired when the user taps a slice. Null means "deselect". Receivers
   /// should treat this as an authoritative selection update.
-  final ValueChanged<int?>? onSelectionChanged;
+  final ValueChanged<int?>? onSelectionChanged,
 
   /// The filtered account's name; while no slice is selected the centre
   /// then reads `<Account> expense`. Null = all accounts.
-  final String? accountName;
-
+  final String? accountName,
+}) extends StatefulWidget {
   @override
   State<CategoryPieChart> createState() => _CategoryPieChartState();
 }

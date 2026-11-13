@@ -18,10 +18,7 @@ import 'package:ledgerly/data/repositories/transaction_repository.dart';
 import 'package:ledgerly/data/services/csv_file_service.dart';
 import 'package:ledgerly/domain/use_cases/csv_export_use_case.dart';
 
-class _FakeCsvFileService implements CsvFileService {
-  _FakeCsvFileService({this.saved = true});
-
-  final bool saved;
+class _FakeCsvFileService({final bool saved = true}) implements CsvFileService {
   final saves = <({String fileName, Uint8List bytes})>[];
 
   @override

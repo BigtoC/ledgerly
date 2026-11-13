@@ -8,18 +8,13 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../domain/models/currency.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class CurrencySelectorTile extends StatelessWidget {
-  const CurrencySelectorTile({
-    super.key,
-    required this.currency,
-    required this.onTap,
-  });
-
-  final Currency currency;
+class const CurrencySelectorTile({
+  super.key,
+  required final Currency currency,
 
   /// Called when the user taps the tile.
-  final VoidCallback onTap;
-
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

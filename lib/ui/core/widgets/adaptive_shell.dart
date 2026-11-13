@@ -9,18 +9,12 @@ import '../../../l10n/app_localizations.dart';
 /// form-route wrapper in `router.dart`, the picker and sheet helpers and the
 /// recurring rules screen switch at the same width. See
 /// `docs/architecture/ui-and-layout.md` for the full list.
-class AdaptiveShell extends StatelessWidget {
-  const AdaptiveShell({
-    super.key,
-    required this.currentIndex,
-    required this.onDestinationSelected,
-    required this.child,
-  });
-
-  final int currentIndex;
-  final void Function(int) onDestinationSelected;
-  final Widget child;
-
+class const AdaptiveShell({
+  super.key,
+  required final int currentIndex,
+  required final void Function(int) onDestinationSelected,
+  required final Widget child,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
