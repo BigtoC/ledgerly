@@ -463,7 +463,13 @@ l10n/
 
 ### Money Storage Policy
 
-All monetary amounts are stored as **integer minor units** — the smallest indivisible unit of the currency: cents for USD (`2` decimals), yen for JPY (`0` decimals), wei for ETH (`18` decimals), and so on. Floating-point types are never used for money. This eliminates rounding drift across sums, monthly summaries, and long-lived balances, and gives Phase 2 tokens exact representation at 18 decimals.
+All monetary amounts are stored as **integer minor units** — the smallest indivisible unit of the currency: cents for USD (`2` decimals), yen for JPY (`0` decimals), wei for ETH (`18` decimals), and so on. Floating-point types are never used for money. This eliminates rounding drift across sums, monthly summaries, and long-lived balances.
+
+> **Open limit: 18-decimal tokens ([#146](https://github.com/BigtoC/ledgerly/issues/146)).** Minor units are a signed 64-bit `int` in Dart and an `INTEGER` in SQLite, whose largest value is 9,223,372,036,854,775,807. At 18 decimals that is about 9.22 tokens, and the limit applies to every stored amount and every `SUM`. A 10 DAI transfer can't be stored, and two 5 ETH transactions can't be totalled, because SQLite's `SUM` raises `integer overflow`. The calculator keypad doesn't stop at the limit either: typing digits (`KeypadState.push`) and `+`/`−` wrap past it into wrong numbers, while `×`/`÷` clamp. With fiat it takes 17 integer digits in a 2-decimal currency, or 19 in JPY, so it can be reached but no real amount does. Nothing in the app uses 18 decimals yet. **Resolve this before any crypto feature (wallet sync, token seeding) ships.** The options:
+>
+> - **Block at the limit:** a keypad press that would take an operand, running total or result outside `int` range is a no-op. Needed whichever storage is chosen, but on its own it doesn't let wallet sync store real transfers.
+> - **Cap the ledger precision of tokens:** `currencies.decimals` keeps fewer places than the chain (for example 8), and wallet sync rounds each transfer once with `decimalStringToMinorUnits(scale:)`. No schema change, and nothing below 10⁻⁸ of a token is lost, but balances can differ from the chain by that dust.
+> - **Wider storage:** keep token amounts as `BigInt` or a decimal string end to end. SQLite has no 128-bit integer, so amounts become `TEXT` and every `SUM`, sort and chart total moves into Dart.
 
 Formatting to a decimal string happens only at the UI boundary via `core/utils/money_formatter.dart`, which divides by `10^currencies.decimals` and applies locale-aware grouping via `intl`'s `NumberFormat.currency`.
 
@@ -860,7 +866,7 @@ Day counter label and "Enter" button label need entries in all three ARB files. 
 
 ## Wallet Transaction Sync (Phase 2 — not yet implemented)
 
-> **Status:** This section describes the planned wallet sync feature. None of the code paths described here (`wallet_addresses` table, `ankr_service.dart`, `wallet_address_repository.dart`, `api_key_repository.dart`, `wallets/` feature) exist in the codebase yet. The `pending_transactions` table is ready for this feature (blockchain source rows), but the sync flow and wallet management UI are not implemented.
+> **Status:** This section describes the planned wallet sync feature. None of the code paths described here (`wallet_addresses` table, `ankr_service.dart`, `wallet_address_repository.dart`, `api_key_repository.dart`, `wallets/` feature) exist in the codebase yet. The `pending_transactions` table is ready for this feature (blockchain source rows), but the sync flow and wallet management UI are not implemented. Before building it, resolve the 18-decimal limit in [Money Storage Policy](#money-storage-policy).
 
 ### Overview
 
