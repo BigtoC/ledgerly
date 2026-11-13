@@ -25,23 +25,16 @@ import '../view_models/settings_state.dart';
 import 'settings_section.dart';
 
 @Dependencies([SettingsController])
-class SplashSettingsSection extends ConsumerWidget {
-  const SplashSettingsSection({
-    super.key,
-    required this.splashEnabled,
-    required this.splashStartDate,
-    required this.splashDisplayText,
-    required this.splashButtonLabel,
-  });
-
-  final bool splashEnabled;
-  final DateTime? splashStartDate;
+class const SplashSettingsSection({
+  super.key,
+  required final bool splashEnabled,
+  required final DateTime? splashStartDate,
 
   /// `null` means "use localized default template" — the widget renders
   /// the default as a placeholder so the user can see what they'd get.
-  final String? splashDisplayText;
-  final String? splashButtonLabel;
-
+  required final String? splashDisplayText,
+  required final String? splashButtonLabel,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -120,11 +113,8 @@ class _SplashPreviewTile extends StatelessWidget {
 }
 
 @Dependencies([SettingsController])
-class _SplashStartDateRow extends ConsumerWidget {
-  const _SplashStartDateRow({required this.startDate});
-
-  final DateTime? startDate;
-
+class const _SplashStartDateRow({required final DateTime? startDate})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -164,27 +154,18 @@ class _SplashStartDateRow extends ConsumerWidget {
 }
 
 @Dependencies([SettingsController])
-class _SplashTextField extends ConsumerStatefulWidget {
-  const _SplashTextField({
-    required this.fieldKey,
-    required this.value,
-    required this.labelText,
-    required this.hintText,
-    required this.write,
-    this.multiline = false,
-  });
-
-  final Key fieldKey;
-  final String? value;
-  final String labelText;
-  final String hintText;
-  final Future<SettingsWriteOutcome> Function(
+class const _SplashTextField({
+  required final Key fieldKey,
+  required final String? value,
+  required final String labelText,
+  required final String hintText,
+  required final Future<SettingsWriteOutcome> Function(
     SettingsController controller,
     String value,
   )
-  write;
-  final bool multiline;
-
+  write,
+  final bool multiline = false,
+}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<_SplashTextField> createState() => _SplashTextFieldState();
 }

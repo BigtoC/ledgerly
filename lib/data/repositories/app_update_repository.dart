@@ -35,23 +35,15 @@ class UpdateStorageException extends RepositoryException {
 ///
 /// Only Android split APKs are published, so on any other ABI this makes
 /// no network call and does not read the installed version.
-class AppUpdateRepository {
-  AppUpdateRepository(
-    this._service, {
-    required this._installer,
-    required this._updatesDir,
-    required this._installedVersion,
-    required this._abi,
-  });
-
-  final AppReleaseService _service;
-  final ApkInstallerService _installer;
+class AppUpdateRepository(
+  final AppReleaseService _service, {
+  required final ApkInstallerService _installer,
 
   /// Existing directory that holds downloaded update APKs.
-  final Future<Directory> Function() _updatesDir;
-  final Future<String> Function() _installedVersion;
-  final Abi _abi;
-
+  required final Future<Directory> Function() _updatesDir,
+  required final Future<String> Function() _installedVersion,
+  required final Abi _abi,
+}) {
   /// ABI suffix used in the release APK names
   /// (`ledgerly-vX.Y.Z-<suffix>.apk`).
   static const _apkAbi = {

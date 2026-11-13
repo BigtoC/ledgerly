@@ -4,11 +4,8 @@
 
 import 'package:material_ui/material_ui.dart';
 
-class PendingBadge extends StatelessWidget {
-  const PendingBadge({super.key, required this.count});
-
-  final int count;
-
+class const PendingBadge({super.key, required final int count})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;

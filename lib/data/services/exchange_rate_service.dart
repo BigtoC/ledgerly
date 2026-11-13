@@ -30,11 +30,7 @@ typedef FetchedRate = ({
 /// expands, add certificate pinning at that point.
 ///
 /// See `docs/superpowers/specs/2026-05-14-multi-currency-conversion-design.md`.
-class ExchangeRateService {
-  ExchangeRateService(this._dio);
-
-  final Dio _dio;
-
+class ExchangeRateService(final Dio _dio) {
   static const _baseUrl = String.fromEnvironment('FOREX_API_URL');
 
   static final _iso4217 = RegExp(r'^[A-Za-z]{3}$');

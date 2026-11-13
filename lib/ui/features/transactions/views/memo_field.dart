@@ -9,16 +9,11 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../l10n/app_localizations.dart';
 
-class MemoField extends StatefulWidget {
-  const MemoField({
-    super.key,
-    required this.initialValue,
-    required this.onChanged,
-  });
-
-  final String initialValue;
-  final ValueChanged<String> onChanged;
-
+class const MemoField({
+  super.key,
+  required final String initialValue,
+  required final ValueChanged<String> onChanged,
+}) extends StatefulWidget {
   @override
   State<MemoField> createState() => _MemoFieldState();
 }

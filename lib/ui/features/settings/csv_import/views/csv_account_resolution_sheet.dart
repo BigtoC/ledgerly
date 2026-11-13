@@ -27,11 +27,10 @@ Future<AccountResolution?> showCsvAccountResolutionSheet(
   );
 }
 
-class CsvAccountResolutionSheet extends StatelessWidget {
-  const CsvAccountResolutionSheet({super.key, required this.match});
-
-  final CsvAccountMatch match;
-
+class const CsvAccountResolutionSheet({
+  super.key,
+  required final CsvAccountMatch match,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -128,20 +127,13 @@ String csvAccountLabel(Account account, AppLocalizations l10n) =>
     ? l10n.csvImportAccountArchived(account.name)
     : account.name;
 
-class _OptionTile extends StatelessWidget {
-  const _OptionTile({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.option,
-    required this.current,
-  });
-
-  final String label;
-  final IconData icon;
-  final AccountResolution option;
-  final AccountResolution? current;
-
+class const _OptionTile({
+  super.key,
+  required final String label,
+  required final IconData icon,
+  required final AccountResolution option,
+  required final AccountResolution? current,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = option == current;

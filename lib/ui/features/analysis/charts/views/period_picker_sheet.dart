@@ -511,12 +511,10 @@ class _PeriodPickerSheetState extends ConsumerState<PeriodPickerSheet> {
 
 /// Narrow weekday names, Monday first to match [DateHelpers.startOfWeek],
 /// with an optional leading 40-wide week-number column.
-class _WeekdayHeader extends StatelessWidget {
-  const _WeekdayHeader({required this.locale, this.weekColumn});
-
-  final String locale;
-  final String? weekColumn;
-
+class const _WeekdayHeader({
+  required final String locale,
+  final String? weekColumn,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -558,23 +556,14 @@ class _WeekdayHeader extends StatelessWidget {
 }
 
 /// A 44-high cell holding a 40×40 circle that grows with large text.
-class _DayCell extends StatelessWidget {
-  const _DayCell({
-    required this.label,
-    required this.semanticsLabel,
-    required this.selected,
-    required this.today,
-    required this.disabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final String semanticsLabel;
-  final bool selected;
-  final bool today;
-  final bool disabled;
-  final VoidCallback onTap;
-
+class const _DayCell({
+  required final String label,
+  required final String semanticsLabel,
+  required final bool selected,
+  required final bool today,
+  required final bool disabled,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -636,29 +625,17 @@ class _DayCell extends StatelessWidget {
 
 /// One Monday-start week: the ISO week number, then its seven day numbers.
 /// The whole row is the tap target.
-class _WeekRow extends StatelessWidget {
-  const _WeekRow({
-    required this.start,
-    required this.weekLabel,
-    required this.semanticsLabel,
-    required this.browsedMonth,
-    required this.today,
-    required this.selected,
-    required this.current,
-    required this.disabled,
-    required this.onTap,
-  });
-
-  final DateTime start;
-  final String weekLabel;
-  final String semanticsLabel;
-  final int browsedMonth;
-  final DateTime today;
-  final bool selected;
-  final bool current;
-  final bool disabled;
-  final VoidCallback onTap;
-
+class const _WeekRow({
+  required final DateTime start,
+  required final String weekLabel,
+  required final String semanticsLabel,
+  required final int browsedMonth,
+  required final DateTime today,
+  required final bool selected,
+  required final bool current,
+  required final bool disabled,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -751,11 +728,8 @@ class _WeekRow extends StatelessWidget {
 }
 
 /// The Months and Years grid: 3 columns, gap 8, padding 8 16 0.
-class _PillGrid extends StatelessWidget {
-  const _PillGrid({required this.cells});
-
-  final List<Widget> cells;
-
+class const _PillGrid({required final List<Widget> cells})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -781,23 +755,14 @@ class _PillGrid extends StatelessWidget {
 }
 
 /// A 52-high pill with a 1px border: a month or a year.
-class _PillCell extends StatelessWidget {
-  const _PillCell({
-    required this.label,
-    required this.semanticsLabel,
-    required this.selected,
-    required this.current,
-    required this.disabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final String semanticsLabel;
-  final bool selected;
-  final bool current;
-  final bool disabled;
-  final VoidCallback onTap;
-
+class const _PillCell({
+  required final String label,
+  required final String semanticsLabel,
+  required final bool selected,
+  required final bool current,
+  required final bool disabled,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -857,19 +822,12 @@ class _PillCell extends StatelessWidget {
 }
 
 /// The browsed month or year with a caret; tapping it drills up.
-class _BrowseTitleButton extends StatelessWidget {
-  const _BrowseTitleButton({
-    required this.title,
-    required this.semanticsLabel,
-    required this.style,
-    required this.onTap,
-  });
-
-  final String title;
-  final String semanticsLabel;
-  final TextStyle style;
-  final VoidCallback onTap;
-
+class const _BrowseTitleButton({
+  required final String title,
+  required final String semanticsLabel,
+  required final TextStyle style,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);

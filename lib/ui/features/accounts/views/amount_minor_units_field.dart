@@ -18,25 +18,17 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/utils/money_formatter.dart';
 import '../../../../domain/models/currency.dart';
 
-class AmountMinorUnitsField extends StatefulWidget {
-  const AmountMinorUnitsField({
-    super.key,
-    required this.currency,
-    required this.locale,
-    required this.initialMinorUnits,
-    required this.onChanged,
-    required this.labelText,
-  });
-
-  final Currency currency;
-  final String locale;
-  final int initialMinorUnits;
-  final String labelText;
+class const AmountMinorUnitsField({
+  super.key,
+  required final Currency currency,
+  required final String locale,
+  required final int initialMinorUnits,
 
   /// Called with a valid parsed minor-unit amount, or `null` when the
   /// input is unparseable / violates `currency.decimals`.
-  final ValueChanged<int?> onChanged;
-
+  required final ValueChanged<int?> onChanged,
+  required final String labelText,
+}) extends StatefulWidget {
   @override
   State<AmountMinorUnitsField> createState() => _AmountMinorUnitsFieldState();
 }

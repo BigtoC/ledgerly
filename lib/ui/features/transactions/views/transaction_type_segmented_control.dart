@@ -8,16 +8,11 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class TransactionTypeSegmentedControl extends StatelessWidget {
-  const TransactionTypeSegmentedControl({
-    super.key,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final CategoryType value;
-  final ValueChanged<CategoryType> onChanged;
-
+class const TransactionTypeSegmentedControl({
+  super.key,
+  required final CategoryType value,
+  required final ValueChanged<CategoryType> onChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

@@ -30,34 +30,22 @@ import 'package:flutter/services.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../view_models/keypad_state.dart';
 
-class CalculatorKeypad extends StatelessWidget {
-  const CalculatorKeypad({
-    super.key,
-    required this.decimals,
-    required this.onDigit,
-    required this.onDecimal,
-    required this.onBackspace,
-    required this.onClear,
-    required this.onOperator,
-    required this.onPercent,
-    required this.onEquals,
-    required this.onSave,
-  });
-
-  final int decimals;
-  final ValueChanged<int> onDigit;
-  final VoidCallback onDecimal;
-  final VoidCallback onBackspace;
-  final VoidCallback onClear;
-  final ValueChanged<CalcOperator> onOperator;
-  final VoidCallback onPercent;
+class const CalculatorKeypad({
+  super.key,
+  required final int decimals,
+  required final ValueChanged<int> onDigit,
+  required final VoidCallback onDecimal,
+  required final VoidCallback onBackspace,
+  required final VoidCallback onClear,
+  required final ValueChanged<CalcOperator> onOperator,
+  required final VoidCallback onPercent,
 
   /// Finishes the pending calculation. Null greys `=` out.
-  final VoidCallback? onEquals;
+  required final VoidCallback? onEquals,
 
   /// Saves what the page is editing. Null greys Save out.
-  final VoidCallback? onSave;
-
+  required final VoidCallback? onSave,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -190,22 +178,16 @@ Color _keyColor(
   return accent ? colors.primaryContainer : colors.surfaceContainerHigh;
 }
 
-class _TextKey extends StatelessWidget {
-  const _TextKey({
-    required this.label,
-    required this.onTap,
-    this.semanticsLabel,
-    this.accent = false,
-  });
-  final String label;
-  final VoidCallback? onTap;
+class const _TextKey({
+  required final String label,
+  required final VoidCallback? onTap,
 
   /// Read out instead of [label], for keys whose glyph isn't a word.
-  final String? semanticsLabel;
+  final String? semanticsLabel,
 
   /// Operator keys take the primary container colour.
-  final bool accent;
-
+  final bool accent = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -242,21 +224,14 @@ class _TextKey extends StatelessWidget {
   }
 }
 
-class _IconKey extends StatelessWidget {
-  const _IconKey({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-    this.onLongPress,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onTap;
+class const _IconKey({
+  required final IconData icon,
+  required final String tooltip,
+  required final VoidCallback? onTap,
 
   /// Clears the amount; announced as a custom semantics action.
-  final VoidCallback? onLongPress;
-
+  final VoidCallback? onLongPress,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;

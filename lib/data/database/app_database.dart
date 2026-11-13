@@ -71,9 +71,7 @@ part 'app_database.g.dart';
     ExchangeRateDao,
   ],
 )
-class AppDatabase extends _$AppDatabase {
-  AppDatabase(super.executor);
-
+class AppDatabase(super.executor) extends _$AppDatabase {
   @override
   int get schemaVersion => 8;
 

@@ -15,19 +15,12 @@ import '../../data/repositories/transaction_repository.dart';
 import '../../data/services/csv_file_service.dart';
 import '../models/category.dart';
 
-class CsvExportUseCase {
-  CsvExportUseCase({
-    required this.fileService,
-    required this.transactionRepo,
-    required this.categoryRepo,
-    required this.accountRepo,
-  });
-
-  final CsvFileService fileService;
-  final TransactionRepository transactionRepo;
-  final CategoryRepository categoryRepo;
-  final AccountRepository accountRepo;
-
+class CsvExportUseCase({
+  required final CsvFileService fileService,
+  required final TransactionRepository transactionRepo,
+  required final CategoryRepository categoryRepo,
+  required final AccountRepository accountRepo,
+}) {
   /// Earliest and latest transaction date; null when there are none.
   Future<DateBounds?> getDateBounds() => transactionRepo.getDateBounds();
 

@@ -52,9 +52,7 @@ import 'transaction_tile.dart';
   defaultCurrency,
   exchangeRates,
 ])
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
-
+class const HomeScreen({super.key}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
@@ -304,25 +302,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   PendingController,
   HomeController,
 ])
-class _SinglePane extends ConsumerWidget {
-  const _SinglePane({
-    required this.data,
-    required this.onPrev,
-    required this.onNext,
-    required this.onPickDay,
-    required this.onJumpToToday,
-    required this.onTapRow,
-    required this.daySwitchAnimation,
-  });
-
-  final HomeData data;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final VoidCallback onPickDay;
-  final VoidCallback onJumpToToday;
-  final void Function(int id) onTapRow;
-  final Animation<Offset> daySwitchAnimation;
-
+class const _SinglePane({
+  required final HomeData data,
+  required final VoidCallback onPrev,
+  required final VoidCallback onNext,
+  required final VoidCallback onPickDay,
+  required final VoidCallback onJumpToToday,
+  required final void Function(int id) onTapRow,
+  required final Animation<Offset> daySwitchAnimation,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = Localizations.localeOf(context).toString();
@@ -420,11 +408,8 @@ class _SinglePane extends ConsumerWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onAdd});
-
-  final VoidCallback onAdd;
-
+class const _EmptyState({required final VoidCallback onAdd})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -452,11 +437,8 @@ class _EmptyState extends StatelessWidget {
 }
 
 @Dependencies([PendingController, HomeController])
-class _PendingOnlyBody extends StatelessWidget {
-  const _PendingOnlyBody({required this.selectedDay});
-
-  final DateTime selectedDay;
-
+class const _PendingOnlyBody({required final DateTime selectedDay})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
@@ -480,11 +462,8 @@ class _PendingOnlyBody extends StatelessWidget {
   }
 }
 
-class _ErrorSurface extends StatelessWidget {
-  const _ErrorSurface({required this.message});
-
-  final String message;
-
+class const _ErrorSurface({required final String message})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -503,11 +482,8 @@ class _ErrorSurface extends StatelessWidget {
 /// Rounded surface for gap-day empty state on Home. Uses the same
 /// container shell as [_TransactionListCard] so the home page reads as
 /// a stack of consistent cards.
-class _EmptyDayCard extends StatelessWidget {
-  const _EmptyDayCard({required this.message});
-
-  final String message;
-
+class const _EmptyDayCard({required final String message})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -537,21 +513,13 @@ class _EmptyDayCard extends StatelessWidget {
 /// than a sliver because a single day's row count is bounded; the
 /// outer `CustomScrollView` still drives vertical scrolling.
 @Dependencies([exchangeRates])
-class _TransactionListCard extends StatelessWidget {
-  const _TransactionListCard({
-    required this.transactions,
-    required this.categories,
-    required this.locale,
-    required this.defaultCurrency,
-    required this.onTapRow,
-  });
-
-  final List<Transaction> transactions;
-  final Map<int, Category> categories;
-  final String locale;
-  final String defaultCurrency;
-  final void Function(int id) onTapRow;
-
+class const _TransactionListCard({
+  required final List<Transaction> transactions,
+  required final Map<int, Category> categories,
+  required final String locale,
+  required final String defaultCurrency,
+  required final void Function(int id) onTapRow,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

@@ -18,18 +18,14 @@ import '../database/daos/recurring_rule_dao.dart';
 import 'currency_repository.dart';
 import 'repository_exceptions.dart';
 
-class RecurringRulesRepositoryException extends RepositoryException {
-  const RecurringRulesRepositoryException(super.message);
-}
+class const RecurringRulesRepositoryException(super.message)
+    extends RepositoryException;
 
-class ArchivedReferenceException extends RecurringRulesRepositoryException {
-  const ArchivedReferenceException(super.message);
-}
+class const ArchivedReferenceException(super.message)
+    extends RecurringRulesRepositoryException;
 
-class FrequencyFieldsMissingException
-    extends RecurringRulesRepositoryException {
-  const FrequencyFieldsMissingException(super.message);
-}
+class const FrequencyFieldsMissingException(super.message)
+    extends RecurringRulesRepositoryException;
 
 abstract class RecurringRulesRepository {
   Stream<List<RecurringRule>> watchActive();

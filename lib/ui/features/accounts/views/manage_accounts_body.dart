@@ -27,11 +27,8 @@ import 'account_type_display.dart';
   initialDefaultCurrency,
   defaultCurrency,
 ])
-class ManageAccountsBody extends StatelessWidget {
-  const ManageAccountsBody({super.key, required this.data});
-
-  final AccountsData data;
-
+class const ManageAccountsBody({super.key, required final AccountsData data})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -105,17 +102,11 @@ class ManageAccountsBody extends StatelessWidget {
   initialDefaultCurrency,
   defaultCurrency,
 ])
-class _AccountTileWithLookups extends ConsumerWidget {
-  const _AccountTileWithLookups({
-    required this.view,
-    required this.isDefault,
-    required this.locale,
-  });
-
-  final AccountWithBalance view;
-  final bool isDefault;
-  final String locale;
-
+class const _AccountTileWithLookups({
+  required final AccountWithBalance view,
+  required final bool isDefault,
+  required final String locale,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -289,17 +280,11 @@ class _AccountTileWithLookups extends ConsumerWidget {
   initialDefaultCurrency,
   defaultCurrency,
 ])
-class _AccountListCard extends StatelessWidget {
-  const _AccountListCard({
-    required this.accounts,
-    required this.defaultAccountId,
-    required this.locale,
-  });
-
-  final List<AccountWithBalance> accounts;
-  final int? defaultAccountId;
-  final String locale;
-
+class const _AccountListCard({
+  required final List<AccountWithBalance> accounts,
+  required final int? defaultAccountId,
+  required final String locale,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

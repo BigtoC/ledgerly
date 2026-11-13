@@ -58,11 +58,8 @@ Future<Category?> showCategoryPicker(
 
 /// Picker body — identical across the modal-sheet and dialog containers.
 @Dependencies([categoriesByType])
-class _CategoryPickerSheet extends ConsumerWidget {
-  const _CategoryPickerSheet({required this.type});
-
-  final CategoryType? type;
-
+class const _CategoryPickerSheet({required final CategoryType? type})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -174,17 +171,11 @@ class _CategoryPickerSheet extends ConsumerWidget {
   }
 }
 
-class _CategoryPickerTile extends StatelessWidget {
-  const _CategoryPickerTile({
-    required this.category,
-    required this.label,
-    required this.onTap,
-  });
-
-  final Category category;
-  final String label;
-  final VoidCallback onTap;
-
+class const _CategoryPickerTile({
+  required final Category category,
+  required final String label,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = colorForIndex(category.color);

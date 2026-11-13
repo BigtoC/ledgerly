@@ -25,55 +25,40 @@ import 'charts_selection_controller.dart';
 part 'account_filter_providers.g.dart';
 
 /// One account row of the account sheet.
-class ChartsAccountFilterOption {
-  const ChartsAccountFilterOption({
-    required this.accountId,
-    required this.name,
-    required this.iconKey,
-    required this.colorIndex,
-    required this.totalMinorUnits,
-    required this.share,
-  });
-
-  final int accountId;
-  final String name;
+class const ChartsAccountFilterOption({
+  required final int accountId,
+  required final String name,
 
   /// `account.icon ?? accountType.icon` (plan D4); empty when neither is
   /// known.
-  final String iconKey;
+  required final String iconKey,
 
   /// `account.color ?? accountType.color` (plan D4).
-  final int colorIndex;
+  required final int colorIndex,
 
   /// Converted total of the current type in the period; 0 when the account
   /// has none.
-  final int totalMinorUnits;
+  required final int totalMinorUnits,
 
   /// [totalMinorUnits] over the type total, `0.0–1.0`; 0 when the type
   /// total is 0.
-  final double share;
-}
+  required final double share,
+});
 
 /// The account sheet's data, in [currency] minor units.
-class ChartsAccountFilterOptions {
-  const ChartsAccountFilterOptions({
-    required this.currency,
-    required this.totalMinorUnits,
-    required this.accounts,
-  });
-
+class const ChartsAccountFilterOptions({
   /// The default currency every amount is converted into.
-  final Currency currency;
+  required final Currency currency,
 
   /// Converted total of the current type across every account, for the
   /// "All accounts" row.
-  final int totalMinorUnits;
+  required final int totalMinorUnits,
 
   /// Active accounts, plus the filtered account when it is archived (plan
   /// D25), largest amount first; zero-amount accounts last in repository
   /// order.
-  final List<ChartsAccountFilterOption> accounts;
-}
+  required final List<ChartsAccountFilterOption> accounts,
+});
 
 /// Per-account, per-currency totals of the selected type in the selected
 /// period's `[start, end)` range.

@@ -11,15 +11,10 @@ import '../services/exchange_rate_service.dart';
 /// and the `fetchedAt` timestamp (e.g. the chart warm-start gate). Keyed
 /// by `from→to` in the snapshot map returned by
 /// [ExchangeRateRepository.watchRatesMetadata].
-class ExchangeRateMetadata {
-  const ExchangeRateMetadata({
-    required this.rateScaledE9,
-    required this.fetchedAt,
-  });
-
-  final int rateScaledE9;
-  final DateTime fetchedAt;
-}
+class const ExchangeRateMetadata({
+  required final int rateScaledE9,
+  required final DateTime fetchedAt,
+});
 
 /// Concrete Drift-backed exchange-rate repository.
 ///
@@ -40,12 +35,12 @@ class ExchangeRateMetadata {
 /// - Sanitized logging: caught exceptions log only the runtime type, never
 ///   the exception object (which can contain URL + currency pairs that
 ///   violate CLAUDE.md's "no financial data in logs" rule).
-final class ExchangeRateRepository {
-  ExchangeRateRepository(
-    this._db,
-    this._service,
-    Stream<String> defaultCurrency$,
-  ) {
+final class ExchangeRateRepository(
+  final drift.AppDatabase _db,
+  final ExchangeRateService _service,
+  Stream<String> defaultCurrency$,
+) {
+  this {
     _currencySub = defaultCurrency$.listen((code) {
       unawaited(
         refreshAll(code).whenComplete(() {
@@ -54,9 +49,6 @@ final class ExchangeRateRepository {
       );
     });
   }
-
-  final drift.AppDatabase _db;
-  final ExchangeRateService _service;
 
   ExchangeRateDao get _dao => _db.exchangeRateDao;
 

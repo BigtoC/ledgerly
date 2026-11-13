@@ -10,20 +10,13 @@ import 'dimension_toggle.dart';
 /// chips above [child] (donut + ranked rows, the empty state, or a
 /// loading / blocked / error body). Carries no horizontal margin; the
 /// charts section provides it.
-class ChartsBreakdownCard extends StatelessWidget {
-  const ChartsBreakdownCard({
-    super.key,
-    required this.type,
-    required this.dimension,
-    required this.onDimensionChanged,
-    required this.child,
-  });
-
-  final CategoryType type;
-  final ChartDimension dimension;
-  final ValueChanged<ChartDimension> onDimensionChanged;
-  final Widget child;
-
+class const ChartsBreakdownCard({
+  super.key,
+  required final CategoryType type,
+  required final ChartDimension dimension,
+  required final ValueChanged<ChartDimension> onDimensionChanged,
+  required final Widget child,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -73,14 +66,13 @@ class ChartsBreakdownCard extends StatelessWidget {
 }
 
 /// Breakdown body when the period has no transactions of [type].
-class BreakdownEmptyState extends StatelessWidget {
-  const BreakdownEmptyState({super.key, required this.type, this.accountName});
-
-  final CategoryType type;
+class const BreakdownEmptyState({
+  super.key,
+  required final CategoryType type,
 
   /// The filtered account's name; null = all accounts.
-  final String? accountName;
-
+  final String? accountName,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

@@ -61,16 +61,11 @@ Future<void> showAnalysisSheet(
 
 /// The bottom sheet's drag handle, keyed [handleKey], or the dialog's top
 /// inset when [showHandle] is false.
-class AnalysisSheetHandle extends StatelessWidget {
-  const AnalysisSheetHandle({
-    super.key,
-    required this.showHandle,
-    required this.handleKey,
-  });
-
-  final bool showHandle;
-  final Key handleKey;
-
+class const AnalysisSheetHandle({
+  super.key,
+  required final bool showHandle,
+  required final Key handleKey,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!showHandle) {

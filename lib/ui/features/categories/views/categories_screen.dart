@@ -32,9 +32,7 @@ import 'category_form_sheet.dart';
 import 'category_tile.dart';
 
 @Dependencies([CategoriesController])
-class CategoriesScreen extends ConsumerWidget {
-  const CategoriesScreen({super.key});
-
+class const CategoriesScreen({super.key}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -60,11 +58,8 @@ class CategoriesScreen extends ConsumerWidget {
 }
 
 @Dependencies([CategoriesController])
-class _CategoriesBody extends StatelessWidget {
-  const _CategoriesBody({required this.data});
-
-  final CategoriesData data;
-
+class const _CategoriesBody({required final CategoriesData data})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -80,10 +75,8 @@ class _CategoriesBody extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label});
-  final String label;
-
+class const _SectionHeader({required final String label})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SliverToBoxAdapter(
     child: Padding(
@@ -94,13 +87,11 @@ class _SectionHeader extends StatelessWidget {
 }
 
 @Dependencies([CategoriesController])
-class _Section extends ConsumerWidget {
-  const _Section({required this.type, required this.rows, required this.l10n});
-
-  final CategoryType type;
-  final List<CategoryRowView> rows;
-  final AppLocalizations l10n;
-
+class const _Section({
+  required final CategoryType type,
+  required final List<CategoryRowView> rows,
+  required final AppLocalizations l10n,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (rows.isEmpty) {

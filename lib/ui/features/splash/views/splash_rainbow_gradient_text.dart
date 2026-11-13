@@ -7,16 +7,11 @@
 
 import 'package:material_ui/material_ui.dart';
 
-class SplashRainbowGradientText extends StatelessWidget {
-  const SplashRainbowGradientText({
-    required this.text,
-    required this.style,
-    super.key,
-  });
-
-  final String text;
-  final TextStyle style;
-
+class const SplashRainbowGradientText({
+  required final String text,
+  required final TextStyle style,
+  super.key,
+}) extends StatelessWidget {
   static const List<Color> _rainbow = <Color>[
     Color(0xFFE53935), // red
     Color(0xFFFB8C00), // orange

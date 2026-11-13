@@ -11,10 +11,9 @@ part 'shopping_list_dao.g.dart';
 /// created_at/updated_at population) live in `ShoppingListRepository`.
 /// This DAO returns Drift rows only.
 @DriftAccessor(tables: [ShoppingListItems])
-class ShoppingListDao extends DatabaseAccessor<AppDatabase>
+class ShoppingListDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$ShoppingListDaoMixin {
-  ShoppingListDao(super.db);
-
   /// Watch all items, newest `created_at` first.
   ///
   /// [limit] caps the number of rows returned; defaults to 10,000 (the MVP

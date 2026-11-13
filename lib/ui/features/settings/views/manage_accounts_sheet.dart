@@ -118,11 +118,8 @@ class _ManageAccountsContent extends ConsumerWidget {
   }
 }
 
-class _ErrorPlaceholder extends StatelessWidget {
-  const _ErrorPlaceholder({required this.onRetry});
-
-  final VoidCallback onRetry;
-
+class const _ErrorPlaceholder({required final VoidCallback onRetry})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

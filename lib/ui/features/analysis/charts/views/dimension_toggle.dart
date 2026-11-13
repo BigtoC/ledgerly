@@ -6,16 +6,11 @@ import '../../../../core/theme/analysis_colors.dart';
 import '../view_models/charts_state.dart';
 
 /// Breakdown-card dimension chips (Category · Account · Currency).
-class DimensionChips extends StatelessWidget {
-  const DimensionChips({
-    super.key,
-    required this.dimension,
-    required this.onChanged,
-  });
-
-  final ChartDimension dimension;
-  final ValueChanged<ChartDimension> onChanged;
-
+class const DimensionChips({
+  super.key,
+  required final ChartDimension dimension,
+  required final ValueChanged<ChartDimension> onChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -38,17 +33,11 @@ class DimensionChips extends StatelessWidget {
   }
 }
 
-class _DimensionChip extends StatelessWidget {
-  const _DimensionChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
+class const _DimensionChip({
+  required final String label,
+  required final bool selected,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);
@@ -125,9 +114,8 @@ class _DimensionChip extends StatelessWidget {
 /// Sends a press that lands on the child's margin (inside this box but
 /// missing every hit target) to the box's centre, as Material buttons do
 /// with their padded tap target, so the centred pill's InkWell gets it.
-class RedirectToCenter extends SingleChildRenderObjectWidget {
-  const RedirectToCenter({super.key, required super.child});
-
+class const RedirectToCenter({super.key, required super.child})
+    extends SingleChildRenderObjectWidget {
   @override
   RenderObject createRenderObject(BuildContext context) =>
       _RenderRedirectToCenter();

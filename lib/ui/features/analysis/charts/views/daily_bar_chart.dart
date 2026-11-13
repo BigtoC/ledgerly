@@ -33,33 +33,23 @@ const EdgeInsets _kTooltipPadding = EdgeInsets.symmetric(
 const double _kTooltipMaxContentWidth = 120;
 
 /// The trend card's bars, average line and x labels.
-class DailyBarChart extends StatefulWidget {
-  const DailyBarChart({
-    super.key,
-    required this.period,
-    required this.series,
-    required this.barColor,
-    required this.locale,
-    required this.currenciesByCode,
-    this.displayCurrencyCode,
-    this.edgeInset = 0,
-  });
-
-  final PeriodType period;
-  final TrendSeries series;
+class const DailyBarChart({
+  super.key,
+  required final PeriodType period,
+  required final TrendSeries series,
 
   /// Solid fill of every bar: the selected slice's colour, else the type's.
-  final Color barColor;
-  final String locale;
-  final Map<String, Currency> currenciesByCode;
-  final String? displayCurrencyCode;
+  required final Color barColor,
+  required final String locale,
+  required final Map<String, Currency> currenciesByCode,
+  final String? displayCurrencyCode,
 
   /// The parent's horizontal padding on each side. A scrolling chart
   /// scrolls through it, so at either end its bars sit where an unscrolled
   /// chart's would and its edge labels stay centred under their bars.
   /// Touches in it do not reach the chart.
-  final double edgeInset;
-
+  final double edgeInset = 0,
+}) extends StatefulWidget {
   @override
   State<DailyBarChart> createState() => _DailyBarChartState();
 }

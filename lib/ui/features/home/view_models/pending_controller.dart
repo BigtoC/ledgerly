@@ -26,10 +26,9 @@ sealed class PendingEffect {
 
 /// Fired after a successful approve. PendingSnackBars shows a SnackBar
 /// with `homePendingApprovedSnack(ruleName)`.
-final class PendingApproveSucceededEffect extends PendingEffect {
-  const PendingApproveSucceededEffect({required this.ruleName});
-  final String ruleName;
-}
+final class const PendingApproveSucceededEffect({
+  required final String ruleName,
+}) extends PendingEffect;
 
 final class PendingApproveFailedEffect extends PendingEffect {
   const PendingApproveFailedEffect();

@@ -127,25 +127,15 @@ const _kInsertChunk = 1000;
 /// event loop between slices so a large file doesn't freeze the UI.
 const _kDedupChunk = 5000;
 
-class CsvImportUseCase {
-  CsvImportUseCase({
-    required this.fileService,
-    required this.transactionRepo,
-    required this.categoryRepo,
-    required this.accountRepo,
-    required this.accountTypeRepo,
-    required this.currencyRepo,
-    required this.db,
-  });
-
-  final CsvFileService fileService;
-  final TransactionRepository transactionRepo;
-  final CategoryRepository categoryRepo;
-  final AccountRepository accountRepo;
-  final AccountTypeRepository accountTypeRepo;
-  final CurrencyRepository currencyRepo;
-  final AppDatabase db;
-
+class CsvImportUseCase({
+  required final CsvFileService fileService,
+  required final TransactionRepository transactionRepo,
+  required final CategoryRepository categoryRepo,
+  required final AccountRepository accountRepo,
+  required final AccountTypeRepository accountTypeRepo,
+  required final CurrencyRepository currencyRepo,
+  required final AppDatabase db,
+}) {
   /// Picks a file, parses it, resolves currencies, rounds amounts and drops
   /// rows that already exist. Returns null when the user cancels.
   ///

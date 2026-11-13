@@ -21,18 +21,12 @@ import 'transaction_search_row.dart';
   analysisCategoriesById,
   analysisAccountsById,
 ])
-class CategorySearchDetailScreen extends ConsumerStatefulWidget {
-  const CategorySearchDetailScreen({
-    super.key,
-    required this.categoryId,
-    required this.query,
-    required this.currencyCode,
-  });
-
-  final int categoryId;
-  final String query;
-  final String currencyCode;
-
+class const CategorySearchDetailScreen({
+  super.key,
+  required final int categoryId,
+  required final String query,
+  required final String currencyCode,
+}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<CategorySearchDetailScreen> createState() =>
       _CategorySearchDetailScreenState();

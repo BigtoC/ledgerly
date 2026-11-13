@@ -29,15 +29,13 @@ enum CsvFileErrorKind {
 /// A file-level CSV import failure. Nothing is imported.
 ///
 /// Carries no file contents, so it is safe to log by `runtimeType`.
-class CsvFileException implements Exception {
-  const CsvFileException(this.kind, {this.missingColumns = const []});
-
-  final CsvFileErrorKind kind;
+class const CsvFileException(
+  final CsvFileErrorKind kind, {
 
   /// Required header names that were not found, for
   /// [CsvFileErrorKind.missingColumns]; empty otherwise.
-  final List<String> missingColumns;
-
+  final List<String> missingColumns = const [],
+}) implements Exception {
   @override
   String toString() => 'CsvFileException: ${kind.name}';
 }

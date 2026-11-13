@@ -3,9 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../core/utils/system_browser.dart';
 
-class AboutScreen extends StatefulWidget {
-  const AboutScreen({super.key});
-
+class const AboutScreen({super.key}) extends StatefulWidget {
   @override
   State<AboutScreen> createState() => _AboutScreenState();
 }

@@ -19,11 +19,10 @@ import '../view_models/csv_import_state.dart';
 import 'csv_account_resolution_sheet.dart';
 
 /// File name, rows to import, their date range and the balance note.
-class CsvImportSummary extends StatelessWidget {
-  const CsvImportSummary({super.key, required this.preview});
-
-  final CsvImportPreview preview;
-
+class const CsvImportSummary({
+  super.key,
+  required final CsvImportPreview preview,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -73,11 +72,8 @@ class CsvImportSummary extends StatelessWidget {
   }
 }
 
-class CsvImportSectionHeader extends StatelessWidget {
-  const CsvImportSectionHeader({super.key, required this.title});
-
-  final String title;
-
+class const CsvImportSectionHeader({super.key, required final String title})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -93,11 +89,8 @@ class CsvImportSectionHeader extends StatelessWidget {
   }
 }
 
-class CsvImportSubheader extends StatelessWidget {
-  const CsvImportSubheader({super.key, required this.title});
-
-  final String title;
-
+class const CsvImportSubheader({super.key, required final String title})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -115,16 +108,11 @@ class CsvImportSubheader extends StatelessWidget {
 
 /// One CSV Account value: its current resolution, or a prompt when the
 /// user must decide. Tapping it opens the decision sheet.
-class CsvAccountEntryTile extends StatelessWidget {
-  const CsvAccountEntryTile({
-    super.key,
-    required this.match,
-    required this.onTap,
-  });
-
-  final CsvAccountMatch match;
-  final VoidCallback onTap;
-
+class const CsvAccountEntryTile({
+  super.key,
+  required final CsvAccountMatch match,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -196,11 +184,10 @@ String csvCategoryKeyText(CsvCategoryEntry entry) => switch (entry.csvType) {
 
 /// A CSV Category value that resolves to existing categories: one target,
 /// or the income marker's Salary / Other income split.
-class CsvExistingCategoryTile extends StatelessWidget {
-  const CsvExistingCategoryTile({super.key, required this.entry});
-
-  final CsvCategoryEntry entry;
-
+class const CsvExistingCategoryTile({
+  super.key,
+  required final CsvCategoryEntry entry,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -229,16 +216,11 @@ class CsvExistingCategoryTile extends StatelessWidget {
 
 /// A CSV Category value that becomes a new custom category, with its
 /// Expense/Income toggle.
-class CsvNewCategoryTile extends StatelessWidget {
-  const CsvNewCategoryTile({
-    super.key,
-    required this.entry,
-    required this.onTypeChanged,
-  });
-
-  final CsvCategoryEntry entry;
-  final ValueChanged<CategoryType> onTypeChanged;
-
+class const CsvNewCategoryTile({
+  super.key,
+  required final CsvCategoryEntry entry,
+  required final ValueChanged<CategoryType> onTypeChanged,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -264,11 +246,8 @@ class CsvNewCategoryTile extends StatelessWidget {
 }
 
 /// One skipped row: line number and reason only.
-class CsvRowErrorLine extends StatelessWidget {
-  const CsvRowErrorLine({super.key, required this.error});
-
-  final CsvRowError error;
-
+class const CsvRowErrorLine({super.key, required final CsvRowError error})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -297,12 +276,10 @@ String _reason(CsvRowError error, AppLocalizations l10n) =>
 
 /// The value, followed by a New badge when a row will be created. A
 /// `Wrap` so the badge drops to its own line at 2x text scale.
-class _TitleWithBadge extends StatelessWidget {
-  const _TitleWithBadge({required this.text, required this.isNew});
-
-  final String text;
-  final bool isNew;
-
+class const _TitleWithBadge({
+  required final String text,
+  required final bool isNew,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isNew) return Text(text);

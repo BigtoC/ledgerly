@@ -11,10 +11,9 @@ part 'transaction_dao.g.dart';
 /// created_at/updated_at population) live in `TransactionRepository`
 /// (M3). This DAO returns Drift rows only.
 @DriftAccessor(tables: [Transactions])
-class TransactionDao extends DatabaseAccessor<AppDatabase>
+class TransactionDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$TransactionDaoMixin {
-  TransactionDao(super.db);
-
   /// Watch transactions whose `date` falls in the half-open range
   /// `[start, end)`, ordered by `date DESC, id DESC`. Backs
   /// `TransactionRepository.watchByDay` — see

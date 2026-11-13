@@ -22,30 +22,20 @@ import '../../../../core/theme/analysis_colors.dart';
 import '../../../categories/views/category_display.dart';
 import 'period_selector.dart' show periodDateFormat;
 
-class SliceTransactionRow extends StatelessWidget {
-  const SliceTransactionRow({
-    super.key,
-    required this.transaction,
-    required this.category,
-    required this.account,
-    required this.locale,
-    required this.onTap,
-    required this.onDelete,
-    this.convertedAmount,
-  });
-
-  final Transaction transaction;
-  final Category? category;
-  final Account? account;
-  final String locale;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
+class const SliceTransactionRow({
+  super.key,
+  required final Transaction transaction,
+  required final Category? category,
+  required final Account? account,
+  required final String locale,
+  required final VoidCallback onTap,
+  required final VoidCallback onDelete,
 
   /// Pre-formatted, signed amount in the slice currency for a
   /// foreign-currency row. When set it is the row's amount and the booked
   /// amount moves to the subtitle.
-  final String? convertedAmount;
-
+  final String? convertedAmount,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -201,31 +191,22 @@ class SliceTransactionRow extends StatelessWidget {
 /// its natural size and the label gives way (ellipsizes) first; the amount
 /// scales down only when it is wider than both its [amountShare] of the
 /// line and the line less [labelReserve], so it is never cut off (plan D2).
-class _LabelThenAmount extends StatelessWidget {
-  const _LabelThenAmount({
-    required this.label,
-    required this.amount,
-    this.gap = 0,
-    this.expandLabel = false,
-    this.amountShare = 1,
-    this.labelReserve = 0,
-  });
-
-  final Widget label;
-  final Widget amount;
-  final double gap;
+class const _LabelThenAmount({
+  required final Widget label,
+  required final Widget amount,
+  final double gap = 0,
 
   /// Whether the label fills the line, pushing the amount to the end.
-  final bool expandLabel;
+  final bool expandLabel = false,
 
   /// The share of the line, after [gap], the amount may always take
   /// before it scales down.
-  final double amountShare;
+  final double amountShare = 1,
 
   /// The width the label must keep. The amount may take the rest of the
   /// line, beyond its [amountShare], before it scales down.
-  final double labelReserve;
-
+  final double labelReserve = 0,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

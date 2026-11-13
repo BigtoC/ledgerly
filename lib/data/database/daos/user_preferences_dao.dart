@@ -11,10 +11,9 @@ part 'user_preferences_dao.g.dart';
 /// `UserPreferencesRepository` (M3). This DAO stays agnostic: every
 /// value is a raw `String`.
 @DriftAccessor(tables: [UserPreferences])
-class UserPreferencesDao extends DatabaseAccessor<AppDatabase>
+class UserPreferencesDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$UserPreferencesDaoMixin {
-  UserPreferencesDao(super.db);
-
   /// Watch a single key's value. Emits `null` when the key is missing.
   Stream<String?> watch(String key) => _valueOf(key).watchSingleOrNull();
 

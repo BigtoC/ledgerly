@@ -358,11 +358,9 @@ GoRouter router(Ref ref) {
 }
 
 @Dependencies([TransactionFormController, categoriesByType])
-class _AdaptiveTransactionFormRoute extends StatelessWidget {
-  const _AdaptiveTransactionFormRoute({required this.mode});
-
-  final TransactionFormMode mode;
-
+class const _AdaptiveTransactionFormRoute({
+  required final TransactionFormMode mode,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _AdaptiveFormRoute(child: TransactionFormScreen(mode: mode));
@@ -386,11 +384,8 @@ TransactionFormMode _addModeFromExtra(Object? extra) {
 /// renders inside a centered, max-560-wide constrained `Dialog` with a
 /// dimmed scrim. Single source of truth for the breakpoint constants —
 /// every form route uses this wrapper.
-class _AdaptiveFormRoute extends StatelessWidget {
-  const _AdaptiveFormRoute({required this.child});
-
-  final Widget child;
-
+class const _AdaptiveFormRoute({required final Widget child})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

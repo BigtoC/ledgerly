@@ -72,11 +72,8 @@ class _AccountTypePickerSheet extends ConsumerWidget {
   }
 }
 
-class _TypesList extends StatelessWidget {
-  const _TypesList({required this.types});
-
-  final List<AccountType> types;
-
+class const _TypesList({required final List<AccountType> types})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

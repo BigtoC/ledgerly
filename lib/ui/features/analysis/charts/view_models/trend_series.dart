@@ -5,45 +5,31 @@
 import 'charts_state.dart';
 
 /// One bar of the trend chart.
-class TrendBucket {
-  const TrendBucket({
-    required this.bucketStart,
-    required this.totalMinorUnits,
-    required this.isFuture,
-  });
-
-  final DateTime bucketStart;
-  final int totalMinorUnits;
+class const TrendBucket({
+  required final DateTime bucketStart,
+  required final int totalMinorUnits,
 
   /// The bucket starts after now.
-  final bool isFuture;
-}
+  required final bool isFuture,
+});
 
-class TrendSeries {
-  const TrendSeries({
-    required this.buckets,
-    required this.averageMinorUnits,
-    required this.currentIndex,
-    required this.labelIndices,
-    required this.yearLabelIndices,
-  });
-
-  final List<TrendBucket> buckets;
+class const TrendSeries({
+  required final List<TrendBucket> buckets,
 
   /// Sum of the elapsed buckets ÷ their count; future buckets are left out
   /// even when they hold an amount. 0 when nothing has elapsed.
-  final double averageMinorUnits;
+  required final double averageMinorUnits,
 
   /// The bucket holding now, only when the period is the current one.
-  final int? currentIndex;
+  required final int? currentIndex,
 
   /// Buckets that get an x label.
-  final Set<int> labelIndices;
+  required final Set<int> labelIndices,
 
   /// The [labelIndices] whose label is the year rather than the bucket's
   /// own label: each January on All, except the current month (D15).
-  final Set<int> yearLabelIndices;
-}
+  required final Set<int> yearLabelIndices,
+});
 
 /// Month labels sit under days 1, 8, 15, 22 and 29 (plus today).
 const _kMonthLabelIndices = [0, 7, 14, 21, 28];

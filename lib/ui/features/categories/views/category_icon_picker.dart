@@ -26,11 +26,8 @@ Future<String?> showCategoryIconPicker(
   );
 }
 
-class _CategoryIconPickerSheet extends StatelessWidget {
-  const _CategoryIconPickerSheet({this.selected});
-
-  final String? selected;
-
+class const _CategoryIconPickerSheet({final String? selected})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

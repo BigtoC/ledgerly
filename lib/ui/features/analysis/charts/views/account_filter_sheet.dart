@@ -34,12 +34,10 @@ Future<void> showAccountFilterSheet(BuildContext context) {
 }
 
 @Dependencies([chartsAccountFilterOptions, ChartsSelectionController])
-class _AccountFilterSheet extends ConsumerStatefulWidget {
-  const _AccountFilterSheet({required this.showHandle});
-
+class const _AccountFilterSheet({
   /// The drag handle belongs to the bottom-sheet form only.
-  final bool showHandle;
-
+  required final bool showHandle,
+}) extends ConsumerStatefulWidget {
   @override
   ConsumerState<_AccountFilterSheet> createState() =>
       _AccountFilterSheetState();
@@ -220,27 +218,16 @@ class _AccountFilterSheetState extends ConsumerState<_AccountFilterSheet> {
   }
 }
 
-class _AccountRow extends StatelessWidget {
-  const _AccountRow({
-    required this.value,
-    required this.name,
-    required this.subtitle,
-    required this.selected,
-    required this.circleColor,
-    required this.icon,
-    required this.iconColor,
-    required this.onTap,
-  });
-
-  final int value;
-  final String name;
-  final String subtitle;
-  final bool selected;
-  final Color circleColor;
-  final IconData icon;
-  final Color iconColor;
-  final VoidCallback onTap;
-
+class const _AccountRow({
+  required final int value,
+  required final String name,
+  required final String subtitle,
+  required final bool selected,
+  required final Color circleColor,
+  required final IconData icon,
+  required final Color iconColor,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AnalysisColors.of(context);

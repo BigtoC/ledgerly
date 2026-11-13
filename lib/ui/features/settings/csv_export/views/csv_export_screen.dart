@@ -15,9 +15,7 @@ import '../view_models/csv_export_controller.dart';
 import '../view_models/csv_export_state.dart';
 
 @Dependencies([CsvExportController])
-class CsvExportScreen extends ConsumerWidget {
-  const CsvExportScreen({super.key});
-
+class const CsvExportScreen({super.key}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -39,12 +37,10 @@ class CsvExportScreen extends ConsumerWidget {
   }
 }
 
-class _ReadyBody extends StatelessWidget {
-  const _ReadyBody({required this.state, required this.controller});
-
-  final CsvExportReady state;
-  final CsvExportController controller;
-
+class const _ReadyBody({
+  required final CsvExportReady state,
+  required final CsvExportController controller,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -123,11 +119,8 @@ class _ReadyBody extends StatelessWidget {
   }
 }
 
-class _Body extends StatelessWidget {
-  const _Body({required this.children});
-
-  final List<Widget> children;
-
+class const _Body({required final List<Widget> children})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(padding: const EdgeInsets.all(24), children: children);

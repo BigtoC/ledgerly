@@ -14,11 +14,8 @@ import '../view_models/settings_controller.dart';
 import '../view_models/settings_state.dart';
 
 @Dependencies([SettingsController])
-class ThemeModeSelector extends ConsumerWidget {
-  const ThemeModeSelector({super.key, required this.value});
-
-  final ThemeMode value;
-
+class const ThemeModeSelector({super.key, required final ThemeMode value})
+    extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);

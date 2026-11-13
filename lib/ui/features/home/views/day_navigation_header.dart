@@ -11,36 +11,24 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../core/utils/date_helpers.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class DayNavigationHeader extends StatelessWidget {
-  const DayNavigationHeader({
-    super.key,
-    required this.selectedDay,
-    required this.locale,
-    required this.onPrev,
-    required this.onNext,
-    required this.onPickDay,
-    required this.canGoPrev,
-    required this.canGoNext,
-    this.showJumpToToday = false,
-    this.onJumpToToday,
-  });
-
-  final DateTime selectedDay;
-  final String locale;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final VoidCallback onPickDay;
-  final bool canGoPrev;
-  final bool canGoNext;
+class const DayNavigationHeader({
+  super.key,
+  required final DateTime selectedDay,
+  required final String locale,
+  required final VoidCallback onPrev,
+  required final VoidCallback onNext,
+  required final VoidCallback onPickDay,
+  required final bool canGoPrev,
+  required final bool canGoNext,
 
   /// When true, the button at the right of the row reads "Jump to today"
   /// and is enabled; when false (already on today) it reads "Today" and
   /// is disabled.
-  final bool showJumpToToday;
+  final bool showJumpToToday = false,
 
   /// Called when the "Jump to today" button is tapped.
-  final VoidCallback? onJumpToToday;
-
+  final VoidCallback? onJumpToToday,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

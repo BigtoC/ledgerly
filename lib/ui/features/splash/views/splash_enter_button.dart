@@ -12,19 +12,14 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
-class SplashEnterButton extends StatelessWidget {
-  const SplashEnterButton({
-    required this.label,
-    this.previewMode = false,
-    super.key,
-  });
-
-  final String label;
+class const SplashEnterButton({
+  required final String label,
 
   /// When `true`, the button pops the current route instead of going
   /// to `/home`. Used by the settings preview entry point.
-  final bool previewMode;
-
+  final bool previewMode = false,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(

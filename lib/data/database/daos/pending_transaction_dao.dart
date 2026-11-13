@@ -11,10 +11,9 @@ part 'pending_transaction_dao.g.dart';
 /// Transactions UI plan (Wave 3). MVP exposes only what
 /// [RecurringGenerationUseCase] and the form's pending-count notice need.
 @DriftAccessor(tables: [PendingTransactions])
-class PendingTransactionDao extends DatabaseAccessor<AppDatabase>
+class PendingTransactionDao(super.db)
+    extends DatabaseAccessor<AppDatabase>
     with _$PendingTransactionDaoMixin {
-  PendingTransactionDao(super.db);
-
   /// Check if a pending row already exists for the given recurring rule
   /// + date. Used by the generation engine's fast-path idempotency skip.
   Future<bool> existsForRuleAndDate(int ruleId, DateTime date) async {

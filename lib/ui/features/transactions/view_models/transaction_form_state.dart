@@ -41,18 +41,12 @@ sealed class TransactionFormMode {
 
 /// Standard Add-transaction flow. [initialDate] (optional) seeds the date
 /// field from the Home day-nav selection.
-class AddTransactionMode extends TransactionFormMode {
-  const AddTransactionMode({this.initialDate});
-
-  final DateTime? initialDate;
-}
+class const AddTransactionMode({final DateTime? initialDate})
+    extends TransactionFormMode;
 
 /// Edit an existing transaction in place.
-class EditTransactionMode extends TransactionFormMode {
-  const EditTransactionMode({required this.transactionId});
-
-  final int transactionId;
-}
+class const EditTransactionMode({required final int transactionId})
+    extends TransactionFormMode;
 
 /// Add a shopping-list draft from the shopping list page (issue #147).
 /// Hydrates like [AddTransactionMode], but every save action saves a draft
@@ -63,11 +57,8 @@ class AddShoppingListDraftMode extends TransactionFormMode {
 
 /// Edit a shopping-list draft. Hydrates from the draft row, exposes
 /// `saveDraft` and `convertDraft` commands rather than the normal `save`.
-class EditShoppingListDraftMode extends TransactionFormMode {
-  const EditShoppingListDraftMode({required this.shoppingListItemId});
-
-  final int shoppingListItemId;
-}
+class const EditShoppingListDraftMode({required final int shoppingListItemId})
+    extends TransactionFormMode;
 
 // ---------------------------------------------------------------------------
 // ShoppingListEditResult — Task 5 §2

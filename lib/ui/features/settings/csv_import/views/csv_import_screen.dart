@@ -18,9 +18,7 @@ import 'csv_account_resolution_sheet.dart';
 import 'csv_import_preview_sections.dart';
 
 @Dependencies([CsvImportController])
-class CsvImportScreen extends ConsumerWidget {
-  const CsvImportScreen({super.key});
-
+class const CsvImportScreen({super.key}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -85,11 +83,7 @@ String _failureMessage(CsvImportFailure failure, AppLocalizations l10n) =>
       CsvFileErrorKind.commitFailed => l10n.csvImportErrorCommit,
     };
 
-class _Progress extends StatelessWidget {
-  const _Progress({required this.label});
-
-  final String label;
-
+class const _Progress({required final String label}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -109,19 +103,12 @@ class _Progress extends StatelessWidget {
 }
 
 /// Idle, done and failure: a few lines of text and one button.
-class _Message extends StatelessWidget {
-  const _Message({
-    this.title,
-    required this.lines,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final String? title;
-  final List<String> lines;
-  final String actionLabel;
-  final VoidCallback onAction;
-
+class const _Message({
+  final String? title,
+  required final List<String> lines,
+  required final String actionLabel,
+  required final VoidCallback onAction,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -145,12 +132,10 @@ class _Message extends StatelessWidget {
   }
 }
 
-class _PreviewBody extends StatefulWidget {
-  const _PreviewBody({required this.preview, required this.controller});
-
-  final CsvImportPreview preview;
-  final CsvImportController controller;
-
+class const _PreviewBody({
+  required final CsvImportPreview preview,
+  required final CsvImportController controller,
+}) extends StatefulWidget {
   @override
   State<_PreviewBody> createState() => _PreviewBodyState();
 }
@@ -271,12 +256,10 @@ class _PreviewBodyState extends State<_PreviewBody> {
   }
 }
 
-class _ConfirmBar extends StatelessWidget {
-  const _ConfirmBar({required this.preview, required this.onConfirm});
-
-  final CsvImportPreview preview;
-  final VoidCallback onConfirm;
-
+class const _ConfirmBar({
+  required final CsvImportPreview preview,
+  required final VoidCallback onConfirm,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

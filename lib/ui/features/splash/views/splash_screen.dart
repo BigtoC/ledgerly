@@ -36,14 +36,14 @@ import 'splash_sun_background.dart';
   splashClock,
   SplashController,
 ])
-class SplashScreen extends ConsumerWidget {
-  const SplashScreen({super.key, this.previewMode = false});
+class const SplashScreen({
+  super.key,
 
   /// When `true`, the Enter button pops the current route instead of
   /// going to `/home`. Set by the `/splash/preview` route reached from
   /// Settings → Splash → "Preview splash screen".
-  final bool previewMode;
-
+  final bool previewMode = false,
+}) extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // The launch-time start-date prompt is selected upstream of the
@@ -85,12 +85,10 @@ class SplashScreen extends ConsumerWidget {
   }
 }
 
-class _SplashContent extends StatelessWidget {
-  const _SplashContent({required this.data, required this.previewMode});
-
-  final SplashData data;
-  final bool previewMode;
-
+class const _SplashContent({
+  required final SplashData data,
+  required final bool previewMode,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // The bottom Enter button is pinned outside the scroll viewport so that
@@ -128,11 +126,9 @@ class _SplashContent extends StatelessWidget {
 /// white shadowed text; `isDate: true` segments are wrapped in a
 /// `SplashRainbowGradientText` via `WidgetSpan` so the rainbow gradient
 /// flows with the surrounding text instead of standing on its own line.
-class _SplashDisplayText extends StatelessWidget {
-  const _SplashDisplayText({required this.segments});
-
-  final List<SplashTextSegment> segments;
-
+class const _SplashDisplayText({
+  required final List<SplashTextSegment> segments,
+}) extends StatelessWidget {
   static const TextStyle _baseStyle = TextStyle(
     color: Colors.white,
     fontSize: 18,

@@ -23,11 +23,8 @@ Future<int?> showCategoryColorPicker(
   );
 }
 
-class _CategoryColorPickerSheet extends StatelessWidget {
-  const _CategoryColorPickerSheet({this.selectedIndex});
-
-  final int? selectedIndex;
-
+class const _CategoryColorPickerSheet({final int? selectedIndex})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(

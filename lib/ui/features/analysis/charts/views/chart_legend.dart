@@ -15,28 +15,20 @@ import '../view_models/selected_slice.dart';
 /// Breakdown ranked rows: one row per slice, largest first, each with a
 /// coloured icon circle, label, amount, share bar and percentage. Mirrors
 /// the donut's selection.
-class ChartLegend extends StatelessWidget {
-  const ChartLegend({
-    super.key,
-    required this.slices,
-    required this.currenciesByCode,
-    required this.locale,
-    this.selectedSliceIndex,
-    required this.onSelectSlice,
-  });
-
-  final List<ChartSlice> slices;
-  final Map<String, Currency> currenciesByCode;
-  final String locale;
+class const ChartLegend({
+  super.key,
+  required final List<ChartSlice> slices,
+  required final Map<String, Currency> currenciesByCode,
+  required final String locale,
 
   /// Index into [slices] of the chart's currently focused slice. Drives
   /// the selected fill and the fade on the other rows.
-  final int? selectedSliceIndex;
+  final int? selectedSliceIndex,
 
   /// Tap callback for rows. Receives the index into [slices] (the
   /// original order, not the visually-sorted order). Null toggles off.
-  final ValueChanged<int?> onSelectSlice;
-
+  required final ValueChanged<int?> onSelectSlice,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Index-tagged sort so taps can map back to the original slice index
@@ -79,28 +71,20 @@ class ChartLegend extends StatelessWidget {
   }
 }
 
-class _RankedRow extends StatelessWidget {
-  const _RankedRow({
-    required this.slice,
-    required this.amount,
-    required this.selected,
-    required this.faded,
-    required this.onTap,
-  });
+class const _RankedRow({
+  required final ChartSlice slice,
+  required final String amount,
+  required final bool selected,
 
+  /// Another row is selected: fade the circle and the bar fill only.
+  required final bool faded,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   static const _darkInk = Color(0xFF1B1B1B);
   static const _lightInk = Color(0xFFFFFFFF);
 
   /// Width the label keeps before a long amount starts to scale down.
   static const double _minLabelWidth = 40;
-
-  final ChartSlice slice;
-  final String amount;
-  final bool selected;
-
-  /// Another row is selected: fade the circle and the bar fill only.
-  final bool faded;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {

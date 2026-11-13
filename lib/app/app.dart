@@ -14,11 +14,8 @@ import 'providers/theme_provider.dart';
 import 'router.dart';
 
 @Dependencies([router, themeMode, userLocalePreference, exchangeRateRepository])
-class App extends ConsumerStatefulWidget {
-  const App({super.key, this.onFirstFrame});
-
-  final VoidCallback? onFirstFrame;
-
+class const App({super.key, final VoidCallback? onFirstFrame})
+    extends ConsumerStatefulWidget {
   @override
   ConsumerState<App> createState() => _AppState();
 }

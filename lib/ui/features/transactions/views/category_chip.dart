@@ -16,19 +16,14 @@ import '../../../../domain/models/category.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../categories/views/category_display.dart';
 
-class CategoryChip extends StatelessWidget {
-  const CategoryChip({
-    super.key,
-    required this.category,
-    required this.onTap,
-    this.hasError = false,
-  });
+class const CategoryChip({
+  super.key,
 
   /// Selected category, or null when the form has not picked one yet.
-  final Category? category;
-  final VoidCallback onTap;
-  final bool hasError;
-
+  required final Category? category,
+  required final VoidCallback onTap,
+  final bool hasError = false,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);

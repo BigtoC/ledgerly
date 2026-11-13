@@ -33,11 +33,8 @@ import 'account_type_picker_sheet.dart';
 import 'amount_minor_units_field.dart';
 import 'currency_picker_sheet.dart';
 
-class AccountFormScreen extends ConsumerStatefulWidget {
-  const AccountFormScreen({super.key, this.accountId});
-
-  final int? accountId;
-
+class const AccountFormScreen({super.key, final int? accountId})
+    extends ConsumerStatefulWidget {
   bool get isEdit => accountId != null;
 
   @override
@@ -328,21 +325,17 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   }
 }
 
-class _FieldHeader extends StatelessWidget {
-  const _FieldHeader({required this.label});
-  final String label;
-
+class const _FieldHeader({required final String label})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Text(label, style: Theme.of(context).textTheme.titleSmall);
 }
 
-class _ColorSwatches extends StatelessWidget {
-  const _ColorSwatches({required this.selected, required this.onSelected});
-
-  final int selected;
-  final ValueChanged<int> onSelected;
-
+class const _ColorSwatches({
+  required final int selected,
+  required final ValueChanged<int> onSelected,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
@@ -373,17 +366,11 @@ class _ColorSwatches extends StatelessWidget {
   }
 }
 
-class _IconSelector extends StatelessWidget {
-  const _IconSelector({
-    required this.iconKey,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String iconKey;
-  final bool selected;
-  final VoidCallback onTap;
-
+class const _IconSelector({
+  required final String iconKey,
+  required final bool selected,
+  required final VoidCallback onTap,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected
@@ -407,12 +394,10 @@ class _IconSelector extends StatelessWidget {
   }
 }
 
-class _NotFoundSurface extends StatelessWidget {
-  const _NotFoundSurface({required this.message, required this.onDismiss});
-
-  final String message;
-  final VoidCallback onDismiss;
-
+class const _NotFoundSurface({
+  required final String message,
+  required final VoidCallback onDismiss,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Auto-pop on first build so users don't sit staring at an error

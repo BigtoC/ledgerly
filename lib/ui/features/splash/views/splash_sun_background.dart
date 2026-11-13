@@ -10,9 +10,7 @@
 
 import 'package:material_ui/material_ui.dart';
 
-class SplashSunBackground extends StatelessWidget {
-  const SplashSunBackground({super.key});
-
+class const SplashSunBackground({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
