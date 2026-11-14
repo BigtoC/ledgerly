@@ -884,6 +884,47 @@ void main() {
     expect(find.text('detail'), findsOneWidget);
   });
 
+  testWidgets('pulling the charts down at the top bounces', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 300));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+    await tester.pump();
+
+    // Just under the 64 app bar, so the drag lands in the page body.
+    await tester.dragFrom(const Offset(200, 100), const Offset(0, 100));
+    expect(
+      Scrollable.of(tester.element(find.byType(ChartsSection))).position.pixels,
+      lessThan(0),
+    );
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('pulling the search results down at the top bounces', (
+    tester,
+  ) async {
+    when(() => tx.watchByMemo(any())).thenAnswer(
+      (_) => Stream.value([
+        for (var id = 1; id <= 20; id++) _tx().copyWith(id: id, categoryId: id),
+      ]),
+    );
+    when(() => cat.watchAll(includeArchived: true)).thenAnswer(
+      (_) => Stream.value([
+        for (var id = 1; id <= 20; id++) _cat().copyWith(id: id),
+      ]),
+    );
+    await tester.pumpWidget(_harness(tx: tx, cat: cat, acct: acct));
+    await tester.pump();
+    await _openSearch(tester);
+    await tester.enterText(find.byType(TextField), 'coffee');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    final tile = find.byType(CategorySearchTile).first;
+    await tester.drag(tile, const Offset(0, 100));
+    expect(Scrollable.of(tester.element(tile)).position.pixels, lessThan(0));
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   // Loads Roboto for the rest of the file, so it stays last.
   group('account filter button at 2× on a phone (Roboto)', () {
     setUpAll(() async {

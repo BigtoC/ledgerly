@@ -324,6 +324,7 @@ class const _SinglePane({
     const double transactionPadding = 24;
 
     Widget body = CustomScrollView(
+      physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverPadding(padding: EdgeInsets.only(top: 38)),
         SliverToBoxAdapter(
@@ -443,6 +444,7 @@ class const _PendingOnlyBody({required final DateTime selectedDay})
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
     return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
       slivers: [
         const SliverPadding(padding: EdgeInsets.only(top: 38)),
         SliverToBoxAdapter(

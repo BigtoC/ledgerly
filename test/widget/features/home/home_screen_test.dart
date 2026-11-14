@@ -1177,6 +1177,70 @@ void main() {
       },
     );
   }
+
+  testWidgets('WH26: pulling the day list down at the top bounces', (
+    tester,
+  ) async {
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    dayCtrl.add([for (var id = 1; id <= 20; id++) _tx(id: id, date: today)]);
+    activityCtrl.add([today]);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 100));
+    expect(
+      Scrollable.of(tester.element(find.byType(DayNavigationHeader)))
+          .position
+          .pixels,
+      lessThan(0),
+    );
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('WH27: pulling a pending-only day down at the top bounces', (
+    tester,
+  ) async {
+    // Short enough that one pending row overflows; a page that fits does
+    // not scroll, so it cannot bounce.
+    await tester.binding.setSurfaceSize(const Size(400, 200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    when(() => pendingRepo.watchAll()).thenAnswer(
+      (_) => Stream.value([
+        PendingTransaction(
+          id: 1,
+          source: 'recurring',
+          amountMinorUnits: 1599,
+          currency: _usd,
+          categoryId: 1,
+          accountId: 1,
+          memo: 'Netflix',
+          date: today,
+          fetchedAt: today,
+          recurringRuleId: 1,
+        ),
+      ]),
+    );
+    await tester.pumpWidget(makeApp());
+    await seedAll(tester);
+    dayCtrl.add(const []);
+    activityCtrl.add(const []);
+    todayTotalsCtrl.add(const {});
+    monthNetCtrl.add(const {});
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 100));
+    expect(
+      Scrollable.of(tester.element(find.text('Netflix'))).position.pixels,
+      lessThan(0),
+    );
+    await tester.pump(const Duration(seconds: 1));
+  });
 }
 
 class const _StubFormScreen({required final String label})
