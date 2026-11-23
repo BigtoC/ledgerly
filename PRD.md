@@ -717,8 +717,9 @@ Stores theme preference (light/dark), default account, default currency, locale,
 
 **Cloud backup keys (Phase 3, planned; see [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented)):**
 - `backup_frequency` — `off` | `daily` | `weekly`, default `off`
-- `last_backup_at` — ISO 8601 UTC time of this device's last successful backup, nullable
-- `device_id` — random id that tags this device's backup in Drive; a new one is written after every restore
+- `last_backup_at` — ISO 8601 UTC time of this device's last successful backup or restore, nullable
+- `device_id` — random id that tags this device's backup in Drive; kept through a restore (a device without one gets a new one), and replaced before a backup that finds a newer Drive file with the same id
+- `backup_account_email` — email of the Google account connected on this device, nullable; null means not connected
 
 ### shopping_list_items
 
@@ -946,7 +947,7 @@ App open (or manual refresh tap) → WalletsController.sync() → WalletSyncUseC
 
 ## Cloud Backup (Phase 3 — not yet implemented)
 
-> **Status:** Designed 2026-11-19 for [#157](https://github.com/BigtoC/ledgerly/issues/157). None of the code paths here (`google_auth_service.dart`, `google_drive_service.dart`, `backup_repository.dart`, `ui/features/settings/backup/`, `/settings/backup`) exist yet. Run the two checks under [Open checks](#open-checks) before building it.
+> **Status:** Designed 2026-11-19 for [#157](https://github.com/BigtoC/ledgerly/issues/157). None of the code paths here (`google_auth_service.dart`, `google_drive_service.dart`, `backup_repository.dart`, `ui/features/settings/backup/`, `/settings/backup`) exist yet. Run the two checks under [Open checks](#open-checks) at the points the design spec's commit plan names.
 
 ### Overview
 
@@ -959,9 +960,9 @@ WhatsApp's own Google backup runs on a private Google endpoint bound to WhatsApp
 | Decision        | Choice                                                                                                                                                                                                                                                                 |
 |-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Provider        | Google Drive `appDataFolder` on Android and iOS, both under one Google Cloud project. Not iCloud and not Firebase/Supabase.                                                                                                                                             |
-| Authentication  | The user's own Google account through `google_sign_in`, used only to grant the `drive.appdata` scope from Backup settings. It is not an app login.                                                                                                                      |
+| Authentication  | The user's own Google account through `google_sign_in`, used only to grant the `drive.appdata` scope from Backup settings. It is not an app login. Disconnect signs out on this device only: it clears the stored email and sets `backup_frequency` to `off`. The grant stays, so other devices keep backing up. Removing Ledgerly's access everywhere is done on the Google Account's third-party connections page; the app has no full revoke. |
 | Encryption      | None. The file is a plain SQLite snapshot, protected by the user's Google account and Drive's server-side encryption. The Backup screen says the file is unencrypted, as CSV export does.                                                                              |
-| Token storage   | The app stores no OAuth token. The Google SDKs hold the grant, and each run asks them for a fresh access token. No `flutter_secure_storage`.                                                                                                                             |
+| Token storage   | The app stores no OAuth token. It stores only the connected account's email, in `user_preferences`. The Google SDKs hold the grant, and each run asks them for a fresh access token. No `flutter_secure_storage`. |
 | Scope           | A one-way snapshot of the whole database: every table, including `user_preferences` and the `exchange_rates` cache. No merge and no multi-device sync, because only `transactions` has a `uuid` and deletes are hard deletes.                                          |
 | Delete/restore  | Restore only from Settings, replacing all local data after a confirmation. One backup per device: upload the new one, check it, then delete the device's previous one. Turning automatic backup off keeps the Drive copy; deleting it is a separate action. Uninstalling leaves it in Drive. |
 | Schedule        | Off (default), Daily or Weekly, plus "Back up now". Automatic backups run only while the app is open; there is no background task.                                                                                                                                      |
@@ -978,8 +979,9 @@ Known trade-offs: the backup is unencrypted; there is no older generation to go 
   → check it: PRAGMA quick_check, and user_version equals schemaVersion
   → resumable upload to appDataFolder, with appProperties:
       schema version, app version, created-at (UTC), platform, device_id
+  → write last_backup_at
   → delete this device's previous backup
-  → delete the temp file → write last_backup_at
+  → delete the temp file
 ```
 
 - The database uses SQLite's default rollback journal, not WAL. Copying `ledgerly.sqlite` while it is open can capture a half-written state, so the snapshot comes from the open connection: `VACUUM INTO` through `customStatement`, inside `exclusively` as Drift's own export does. It cannot run inside a transaction. The bundled SQLite (3.54.0, pinned by `pubspec.lock`) supports it.
@@ -991,13 +993,15 @@ Known trade-offs: the backup is unencrypted; there is no older generation to go 
 ```text
 Settings → Backup → Restore on a listed backup
   → confirm: backup date, and "replaces all current data"
-  → download to a temp file
+  → download to <documents>/ledgerly.sqlite.restore.part
   → check it: PRAGMA quick_check; reject user_version above schemaVersion
-  → move it next to the database as ledgerly.sqlite.restore
+  → give it this device's device_id and backup_account_email, this device's
+    backup_frequency if it has one, and last_backup_at = the restore time
+  → if user_version is below schemaVersion, open it once with AppDatabase to migrate it
+  → rename it to ledgerly.sqlite.restore
   → close AppDatabase → run bootstrap() again with a new ProviderScope
   → bootstrap, before opening the database: delete any leftover ledgerly.sqlite-journal,
     rename ledgerly.sqlite.restore over ledgerly.sqlite, then open
-  → write a new device_id and clear last_backup_at
 ```
 
 - If the process dies after staging, the next cold start finishes the restore.
@@ -1008,8 +1012,8 @@ Settings → Backup → Restore on a listed backup
 
 ### Automatic backup
 
-- Checked after the first frame, from the same hook as the app-update check, and when the app resumes.
-- Runs when `backup_frequency` is not `off`, `last_backup_at` is older than the period, and the silent authorization call returns a token. If it returns none, the backup is skipped and the Backup screen shows "Reconnect Google".
+- Checked after the first frame, from the same hook as the app-update check, and when the app comes back from the background.
+- Runs when this device is connected (`backup_account_email` is set), `backup_frequency` is not `off`, `last_backup_at` is older than the period, and the silent authorization call returns a token for the connected account (checked with Drive `about.get`). On a device that is not connected the check stops at once, without calling Google. With no token, or another account's token, the backup is skipped and the Backup screen offers Reconnect.
 - The trigger tracks what it has already requested: writing `last_backup_at` makes the preference stream emit again (see *Performance rules* in `AGENTS.md`).
 - No `workmanager`. A background Flutter engine cannot share the Drift connection (`drift_flutter`'s `shareAcrossIsolates` does not work across engines), and iOS may stop a background task after about 30 s.
 
@@ -1017,7 +1021,7 @@ Settings → Backup → Restore on a listed backup
 
 Route `/settings/backup` (modal push, root navigator, like import and export), opened from a tile in Settings → Data Management. The screen shows:
 
-- Connect Google; once connected, the account's email and Disconnect
+- Connect Google; once connected, the account's email and Disconnect (also offered when the account needs reconnecting or Drive cannot be reached), whose confirmation says it stops backups on this device only
 - Automatic backup: Off, Daily or Weekly
 - "Back up now", with the last backup's time and size
 - The backups in the connected account, this device's and other devices', each with date, platform and app version, and Restore and Delete actions
@@ -1025,13 +1029,15 @@ Route `/settings/backup` (modal push, root navigator, like import and export), o
 
 Connecting shows backups made by other devices in the list; the app never deletes another device's backup.
 
+After a successful Connect or Reconnect, if the account's newest backup is restorable and newer than this device's last backup (on a device that has never backed up, only while it holds no transactions), the screen asks whether to restore it. The offer never appears at launch or on its own; restore still runs only from Settings.
+
 ### Architecture
 
 - `data/services/google_auth_service.dart` wraps `google_sign_in` 7.x: `initialize` once with the Web client ID as `serverClientId`, interactive `authenticate` and `authorizeScopes` only from a user tap, silent `authorizationForScopes` for automatic runs.
-- `data/services/google_drive_service.dart` calls Drive v3 REST over the shared `Dio`: `files.list` with `spaces=appDataFolder`, resumable upload with `parents: ['appDataFolder']`, `files.get?alt=media` and `files.delete`. It returns records and throws `DioException`, like `ExchangeRateService`.
+- `data/services/google_drive_service.dart` calls Drive v3 REST over the shared `Dio`: `about.get` with `fields=user(emailAddress)` for the account check, `files.list` with `spaces=appDataFolder`, resumable upload with `parents: ['appDataFolder']`, `files.get?alt=media` and `files.delete`. It returns records and throws `DioException`, like `ExchangeRateService`.
 - `data/repositories/backup_repository.dart` owns the snapshot, checks, upload, pruning, download and staging. It needs no use case, because only one repository is involved.
 - Settings live in `user_preferences` (see [Cloud backup keys](#user_preferences)), so there is no schema change.
-- `ui/features/settings/backup/view_models/backup_controller.dart` is `keepAlive` and not a family, so an upload survives leaving the screen. `backup_state.dart` holds `idle | working | done | failed(BackupFailure)`, where `BackupFailure` is `noNetwork | storageFull | notAuthorized | newerSchema | corrupt | unknown`.
+- `ui/features/settings/backup/view_models/backup_controller.dart` is `keepAlive` and not a family, so an upload survives leaving the screen. `backup_state.dart` holds `idle | working(job) | failed(BackupFailure)`. `BackupFailure` is `noNetwork | storageFull | notAuthorized | newerSchema | corrupt | unknown` and lives in `domain/models/drive_backup.dart`, beside the `BackupException` that `BackupRepository` throws to carry it.
 - `google_sign_in` joins the plugin bans in `import_analysis_options.yaml` for widgets, controllers, use cases and `app/`, and the layer-boundary test.
 - Logs carry `${e.runtimeType}` only. Never log a `DioException`'s message (it carries URLs) or file names.
 
@@ -1039,7 +1045,7 @@ Connecting shows backups made by other devices in the list; the app never delete
 
 - No network → `noNetwork`.
 - Drive storage full → `storageFull`. Hidden app data counts toward the user's Google storage.
-- Authorization missing or revoked → `notAuthorized`; automatic backups are skipped and the screen offers Reconnect.
+- Authorization missing or revoked, or a silent token for another Google account than the connected one → `notAuthorized`; automatic backups are skipped and the screen offers Reconnect.
 - A backup deleted outside the app (the user can delete hidden app data from Drive) disappears from the list: the Drive listing is the source of truth, not `last_backup_at`.
 
 In every case the device's previous backup is kept.
@@ -1058,14 +1064,14 @@ In every case the device's previous backup is kept.
 
 ### Open checks
 
-Run these before writing the feature:
+Run each check before the code that depends on it:
 
 1. Do the Android and iOS clients in one project see the same `appDataFolder`? Google does not document it, and Android ↔ iOS restore depends on it.
 2. Does closing `AppDatabase` and running `bootstrap()` again in-process rebuild the app cleanly?
 
 ### Tests
 
-- Repository round trip: back up, change data, restore; every table matches the backup.
+- Repository round trip: back up, change data, restore; every table matches the backup, except that `device_id` and `backup_account_email` keep this device's values, `backup_frequency` keeps this device's value when it has one, and `last_backup_at` is the restore time.
 - A backup whose `user_version` is above `schemaVersion` is rejected.
 - A staged `ledgerly.sqlite.restore` is applied at the next open, and a leftover `-journal` is deleted.
 - The new backup is uploaded and checked before the device's previous one is deleted, and another device's backup is never deleted.
@@ -1432,7 +1438,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - The app-update check sends a fixed GitHub `releases/latest` GET (Android only, once per launch) and downloads the release APK only on a user tap; neither request includes any user or transaction data
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
 - Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data. CSV import has no size or row cap (decided 2026-10-30): it parses off the UI isolate and inserts in chunks inside one all-or-nothing transaction. CSV export (2026-10-30) runs only on a button tap, saves through the system save dialog, prefixes category, account and memo text that starts with `= + - @`, tab or CR with `'`, warns on screen that the file is unencrypted, and deletes the iOS picker's temp copy
-- Cloud backup (Phase 3, decided 2026-11-19; see [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented)) is opt-in. The user's own Google account grants only the `drive.appdata` scope, and the whole database goes unencrypted to that account's Drive `appDataFolder`. It is the first request the app itself starts that carries financial data, so the Backup screen says the file is unencrypted. The app stores no OAuth token, backup metadata carries no financial data, and restore is an explicit action in Settings. Android Auto Backup and iOS device backup, which also hold the unencrypted database, stay on
+- Cloud backup (Phase 3, decided 2026-11-19; see [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented)) is opt-in. The user's own Google account grants only the `drive.appdata` scope, and the whole database goes unencrypted to that account's Drive `appDataFolder`. It is the first request the app itself starts that carries financial data, so the Backup screen says the file is unencrypted. The app stores no OAuth token (only the connected account's email, which is therefore also in the Drive backups and in OS backups), backup metadata carries no financial data, and restore is an explicit action in Settings. Android Auto Backup and iOS device backup, which also hold the unencrypted database, stay on
 
 ---
 
