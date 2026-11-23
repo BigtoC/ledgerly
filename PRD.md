@@ -55,7 +55,7 @@ Inline `# Phase 2` annotations throughout the rest of the document mark code pat
 - **[Pending]** Wallet transaction sync** — EVM wallet addresses linked to accounts, Ankr API integration, pending transaction review/approve/reject flow
 - **[Pending]** Budget management (weekly/monthly/yearly)
 - **[Shipped 2026-10-30]** Data export (CSV) — Settings → Data Management → Export data writes the transactions of a chosen date range (every transaction by default) to a UTF-8 CSV (`id, date, type, amount, currency, category, account, memo, created_at, updated_at`; `id` holds the transaction's `uuid`; decimal amounts, category and account names, local ISO 8601 times with offset; no `amount_formula`) and saves it through the system save dialog (Android opens in Downloads; iOS uses the Files picker).
-- **[Pending]** Cloud backup & sync
+- **[Pending]** Cloud backup ([#157](https://github.com/BigtoC/ledgerly/issues/157)) — opt-in backup and restore of the whole database to the user's own Google Drive, modelled on WhatsApp's chat backup. No sync. See [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented).
 
 ### Future (Good to Have)
 - App lock / password protection
@@ -442,6 +442,8 @@ l10n/
 7. Configure `ProviderScope` with overrides injecting the opened `AppDatabase` into `appDatabaseProvider`
 8. `runApp(ProviderScope(overrides: [...], child: App()))`
 
+Phase 3 cloud backup (planned) adds one step before step 2: if a staged restore file exists, it replaces the database file. See [Cloud Backup → Restore](#restore).
+
 ### Technology Stack
 
 | Concern           | Technology                                  |
@@ -713,6 +715,11 @@ Stores theme preference (light/dark), default account, default currency, locale,
 - `splash_display_text` — string, default uses l10n template
 - `splash_button_label` — string, default uses l10n "Enter"
 
+**Cloud backup keys (Phase 3, planned; see [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented)):**
+- `backup_frequency` — `off` | `daily` | `weekly`, default `off`
+- `last_backup_at` — ISO 8601 UTC time of this device's last successful backup, nullable
+- `device_id` — random id that tags this device's backup in Drive; a new one is written after every restore
+
 ### shopping_list_items
 
 | Column                      | Type     | Constraints                                  |
@@ -934,6 +941,138 @@ App open (or manual refresh tap) → WalletsController.sync() → WalletSyncUseC
 - Network failure: show error snackbar, retain last successful sync timestamp
 - Invalid API key: prompt user to re-enter
 - Rate limit hit (30 req/min free tier): queue remaining wallets, retry after cooldown; retry logic lives in `WalletSyncUseCase`
+
+---
+
+## Cloud Backup (Phase 3 — not yet implemented)
+
+> **Status:** Designed 2026-11-19 for [#157](https://github.com/BigtoC/ledgerly/issues/157). None of the code paths here (`google_auth_service.dart`, `google_drive_service.dart`, `backup_repository.dart`, `ui/features/settings/backup/`, `/settings/backup`) exist yet. Run the two checks under [Open checks](#open-checks) before building it.
+
+### Overview
+
+Users can back up the whole database to their own Google Drive and restore it from Settings. The design follows WhatsApp's Google Drive chat backup: one snapshot per device, replaced on every backup and restored all-or-nothing. Backup is opt-in and off by default, and the app stays fully usable without a Google account. There is no Ledgerly account and no server: the file goes from the device straight to the user's Drive.
+
+WhatsApp's own Google backup runs on a private Google endpoint bound to WhatsApp's signing certificate. The closest public equivalent is the Drive API's hidden `appDataFolder`.
+
+### Decisions (2026-11-19)
+
+| Decision        | Choice                                                                                                                                                                                                                                                                 |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Provider        | Google Drive `appDataFolder` on Android and iOS, both under one Google Cloud project. Not iCloud and not Firebase/Supabase.                                                                                                                                             |
+| Authentication  | The user's own Google account through `google_sign_in`, used only to grant the `drive.appdata` scope from Backup settings. It is not an app login.                                                                                                                      |
+| Encryption      | None. The file is a plain SQLite snapshot, protected by the user's Google account and Drive's server-side encryption. The Backup screen says the file is unencrypted, as CSV export does.                                                                              |
+| Token storage   | The app stores no OAuth token. The Google SDKs hold the grant, and each run asks them for a fresh access token. No `flutter_secure_storage`.                                                                                                                             |
+| Scope           | A one-way snapshot of the whole database: every table, including `user_preferences` and the `exchange_rates` cache. No merge and no multi-device sync, because only `transactions` has a `uuid` and deletes are hard deletes.                                          |
+| Delete/restore  | Restore only from Settings, replacing all local data after a confirmation. One backup per device: upload the new one, check it, then delete the device's previous one. Turning automatic backup off keeps the Drive copy; deleting it is a separate action. Uninstalling leaves it in Drive. |
+| Schedule        | Off (default), Daily or Weekly, plus "Back up now". Automatic backups run only while the app is open; there is no background task.                                                                                                                                      |
+| App id          | Stays `com.example.ledgerly` on Android and iOS.                                                                                                                                                                                                                       |
+| OS backups      | Android Auto Backup and iOS device backup stay on as a free fallback. `AndroidManifest.xml` sets no backup attributes, so Auto Backup's defaults include `app_flutter/ledgerly.sqlite`.                                                                                 |
+
+Known trade-offs: the backup is unencrypted; there is no older generation to go back to, so a backup taken after an accidental delete replaces the good one; Android needs Google Play services; automatic backups wait until the app is opened; switching Google accounts hides the old account's backup.
+
+### Backup
+
+```text
+"Back up now" tap, or an automatic backup that is due
+  → VACUUM INTO a temp file under the cache directory
+  → check it: PRAGMA quick_check, and user_version equals schemaVersion
+  → resumable upload to appDataFolder, with appProperties:
+      schema version, app version, created-at (UTC), platform, device_id
+  → delete this device's previous backup
+  → delete the temp file → write last_backup_at
+```
+
+- The database uses SQLite's default rollback journal, not WAL. Copying `ledgerly.sqlite` while it is open can capture a half-written state, so the snapshot comes from the open connection: `VACUUM INTO` through `customStatement`, inside `exclusively` as Drift's own export does. It cannot run inside a transaction. The bundled SQLite (3.54.0, pinned by `pubspec.lock`) supports it.
+- `appProperties` carry no financial data: no counts, totals or currency lists.
+- If any step fails, the device's previous backup stays in Drive.
+
+### Restore
+
+```text
+Settings → Backup → Restore on a listed backup
+  → confirm: backup date, and "replaces all current data"
+  → download to a temp file
+  → check it: PRAGMA quick_check; reject user_version above schemaVersion
+  → move it next to the database as ledgerly.sqlite.restore
+  → close AppDatabase → run bootstrap() again with a new ProviderScope
+  → bootstrap, before opening the database: delete any leftover ledgerly.sqlite-journal,
+    rename ledgerly.sqlite.restore over ledgerly.sqlite, then open
+  → write a new device_id and clear last_backup_at
+```
+
+- If the process dies after staging, the next cold start finishes the restore.
+- The restored file has `first_run_completed = true`, so the first-run seed is skipped. Theme, locale, splash settings and the default currency come from the backup.
+- Newer backups are rejected because Drift calls `onUpgrade` on a downgrade too. Ledgerly's steps are all `if (from < N)`, so none would run and the file would be stamped with the older version. The list shows them as not restorable (from `appProperties`), and the repository checks the file's own `user_version` before staging. Older backups migrate forward through the normal migration path.
+- Nothing closes `AppDatabase` today. The restore needs that path, plus fresh values for every one-shot `bootstrap()` override (theme, locale, default currency and the splash gate).
+- Swapping the file must run in a service, because `lib/app/` may not import `path_provider`.
+
+### Automatic backup
+
+- Checked after the first frame, from the same hook as the app-update check, and when the app resumes.
+- Runs when `backup_frequency` is not `off`, `last_backup_at` is older than the period, and the silent authorization call returns a token. If it returns none, the backup is skipped and the Backup screen shows "Reconnect Google".
+- The trigger tracks what it has already requested: writing `last_backup_at` makes the preference stream emit again (see *Performance rules* in `AGENTS.md`).
+- No `workmanager`. A background Flutter engine cannot share the Drift connection (`drift_flutter`'s `shareAcrossIsolates` does not work across engines), and iOS may stop a background task after about 30 s.
+
+### Settings > Backup
+
+Route `/settings/backup` (modal push, root navigator, like import and export), opened from a tile in Settings → Data Management. The screen shows:
+
+- Connect Google; once connected, the account's email and Disconnect
+- Automatic backup: Off, Daily or Weekly
+- "Back up now", with the last backup's time and size
+- The backups in the connected account, this device's and other devices', each with date, platform and app version, and Restore and Delete actions
+- A note that the backup is unencrypted and stored in the user's Google account
+
+Connecting shows backups made by other devices in the list; the app never deletes another device's backup.
+
+### Architecture
+
+- `data/services/google_auth_service.dart` wraps `google_sign_in` 7.x: `initialize` once with the Web client ID as `serverClientId`, interactive `authenticate` and `authorizeScopes` only from a user tap, silent `authorizationForScopes` for automatic runs.
+- `data/services/google_drive_service.dart` calls Drive v3 REST over the shared `Dio`: `files.list` with `spaces=appDataFolder`, resumable upload with `parents: ['appDataFolder']`, `files.get?alt=media` and `files.delete`. It returns records and throws `DioException`, like `ExchangeRateService`.
+- `data/repositories/backup_repository.dart` owns the snapshot, checks, upload, pruning, download and staging. It needs no use case, because only one repository is involved.
+- Settings live in `user_preferences` (see [Cloud backup keys](#user_preferences)), so there is no schema change.
+- `ui/features/settings/backup/view_models/backup_controller.dart` is `keepAlive` and not a family, so an upload survives leaving the screen. `backup_state.dart` holds `idle | working | done | failed(BackupFailure)`, where `BackupFailure` is `noNetwork | storageFull | notAuthorized | newerSchema | corrupt | unknown`.
+- `google_sign_in` joins the plugin bans in `import_analysis_options.yaml` for widgets, controllers, use cases and `app/`, and the layer-boundary test.
+- Logs carry `${e.runtimeType}` only. Never log a `DioException`'s message (it carries URLs) or file names.
+
+### Error Handling
+
+- No network → `noNetwork`.
+- Drive storage full → `storageFull`. Hidden app data counts toward the user's Google storage.
+- Authorization missing or revoked → `notAuthorized`; automatic backups are skipped and the screen offers Reconnect.
+- A backup deleted outside the app (the user can delete hidden app data from Drive) disappears from the list: the Drive listing is the source of truth, not `last_backup_at`.
+
+In every case the device's previous backup is kept.
+
+### Google Cloud Setup (one-time)
+
+- One Google Cloud project with the Drive API enabled.
+- OAuth consent screen: External, published as In production; in Testing, a user's grant expires after 7 days. The only scope is `drive.appdata`, which is non-sensitive, so the app needs no OAuth verification and has no 100-user cap.
+- Homepage `https://ledgerlylab.com` and a privacy-policy page on that site, both required for an external app in production. The privacy page doesn't exist yet. It must say the backup goes to the user's own Drive and the developer cannot read it. Verifying the domain in Google Search Console allows optional brand verification, so the consent screen shows Ledgerly's name and logo.
+- OAuth clients, each registered once. Releases need no new registration while the package name and the release keystore stay the same.
+  - Android release: `com.example.ledgerly` plus the SHA-1 of the release keystore.
+  - Web: its client ID is passed as `serverClientId`, which Android's Credential Manager requires.
+  - iOS: bundle id `com.example.ledgerly`. `GIDClientID` and the reversed-client-ID URL scheme go in `ios/Runner/Info.plist`; a misconfiguration crashes natively.
+  - Android debug (optional): the SHA-1 of a developer's `~/.android/debug.keystore`. CI debug APKs get a new debug keystore on every run, so Google sign-in does not work in them.
+- Publishing through Play Store with Play App Signing would add one more Android client for Google's signing certificate.
+
+### Open checks
+
+Run these before writing the feature:
+
+1. Do the Android and iOS clients in one project see the same `appDataFolder`? Google does not document it, and Android ↔ iOS restore depends on it.
+2. Does closing `AppDatabase` and running `bootstrap()` again in-process rebuild the app cleanly?
+
+### Tests
+
+- Repository round trip: back up, change data, restore; every table matches the backup.
+- A backup whose `user_version` is above `schemaVersion` is rejected.
+- A staged `ledgerly.sqlite.restore` is applied at the next open, and a leftover `-journal` is deleted.
+- The new backup is uploaded and checked before the device's previous one is deleted, and another device's backup is never deleted.
+- `GoogleDriveService` list, upload, download and delete against a mocked `Dio`.
+- Due-check logic with a fake clock; a launch with a backup due runs exactly one backup, and the `last_backup_at` write does not start another.
+- Backup screen widget tests at 390 and 1000 wide and at 2× text scale.
+- Device checks: a release-signed APK against the In-production consent screen, and `ios-nightly.yml` passing without creating a Podfile.
 
 ---
 
@@ -1293,7 +1432,7 @@ Material Design 3 with `ColorScheme.fromSeed()` for both light and dark variants
 - The app-update check sends a fixed GitHub `releases/latest` GET (Android only, once per launch) and downloads the release APK only on a user tap; neither request includes any user or transaction data
 - App lock remains future work. MVP baseline relies on OS device security plus sandbox/file-protection settings rather than an in-app passcode
 - Future CSV import/export must be explicit user actions with schema validation, malformed-row handling, formula escaping, and clear warnings that exported CSV files are portable unencrypted data. CSV import has no size or row cap (decided 2026-10-30): it parses off the UI isolate and inserts in chunks inside one all-or-nothing transaction. CSV export (2026-10-30) runs only on a button tap, saves through the system save dialog, prefixes category, account and memo text that starts with `= + - @`, tab or CR with `'`, warns on screen that the file is unencrypted, and deletes the iOS picker's temp copy
-- Future cloud backup must define provider choice, authentication, encryption expectations, token storage, sync scope, and delete/restore behavior before implementation
+- Cloud backup (Phase 3, decided 2026-11-19; see [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented)) is opt-in. The user's own Google account grants only the `drive.appdata` scope, and the whole database goes unencrypted to that account's Drive `appDataFolder`. It is the first request the app itself starts that carries financial data, so the Backup screen says the file is unencrypted. The app stores no OAuth token, backup metadata carries no financial data, and restore is an explicit action in Settings. Android Auto Backup and iOS device backup, which also hold the unencrypted database, stay on
 
 ---
 
@@ -1408,7 +1547,7 @@ Versions below are the tested resolvable set under Flutter **3.50.0** (Dart 3.14
 | Package                  | Phase   | Purpose                              |
 |--------------------------|---------|--------------------------------------|
 | `flutter_secure_storage` | Phase 2 | Secure API key storage (wallet sync) |
-| Firebase/Supabase        | Phase 3 | Cloud backup & sync                  |
+| `google_sign_in`         | Phase 3 | Google Drive access (cloud backup)   |
 | `local_auth`             | Future  | App lock                             |
 
 ### Dev Dependencies
