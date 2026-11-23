@@ -718,7 +718,7 @@ Stores theme preference (light/dark), default account, default currency, locale,
 **Cloud backup keys (Phase 3, planned; see [Cloud Backup](#cloud-backup-phase-3--not-yet-implemented)):**
 - `backup_frequency` — `off` | `daily` | `weekly`, default `off`
 - `last_backup_at` — ISO 8601 UTC time of this device's last successful backup or restore, nullable
-- `device_id` — random id that tags this device's backup in Drive; kept through a restore (a device without one gets a new one), and replaced before a backup that finds a newer Drive file with the same id
+- `device_id` — random id that tags this device's backup in Drive; kept through a restore of this device's own backup (a restore of another device's backup, and a device without one, gets a new one), and replaced before a backup that finds a newer Drive file with the same id
 - `backup_account_email` — email of the Google account connected on this device, nullable; null means not connected
 
 ### shopping_list_items
@@ -995,7 +995,8 @@ Settings → Backup → Restore on a listed backup
   → confirm: backup date, and "replaces all current data"
   → download to <documents>/ledgerly.sqlite.restore.part
   → check it: PRAGMA quick_check; reject user_version above schemaVersion
-  → give it this device's device_id and backup_account_email, this device's
+  → keep this device's device_id when the backup came from this device; otherwise
+    write a new one. Give it this device's backup_account_email, this device's
     backup_frequency if it has one, and last_backup_at = the restore time
   → if user_version is below schemaVersion, open it once with AppDatabase to migrate it
   → rename it to ledgerly.sqlite.restore
@@ -1013,8 +1014,8 @@ Settings → Backup → Restore on a listed backup
 ### Automatic backup
 
 - Checked after the first frame, from the same hook as the app-update check, and when the app comes back from the background.
-- Runs when this device is connected (`backup_account_email` is set), `backup_frequency` is not `off`, `last_backup_at` is older than the period, and the silent authorization call returns a token for the connected account (checked with Drive `about.get`). On a device that is not connected the check stops at once, without calling Google. With no token, or another account's token, the backup is skipped and the Backup screen offers Reconnect.
-- The trigger tracks what it has already requested: writing `last_backup_at` makes the preference stream emit again (see *Performance rules* in `AGENTS.md`).
+- Runs when this device is connected (`backup_account_email` is set), `backup_frequency` is not `off`, `last_backup_at` is older than the period (20 hours for Daily, 6 days 20 hours for Weekly), and the silent authorization call returns a token for the connected account (checked with Drive `about.get`). On a device that is not connected the check stops at once, without calling Google. With no token, or another account's token, the backup is skipped and the Backup screen offers Reconnect.
+- The triggers are imperative calls from the first-frame hook and `AppLifecycleListener.onShow`; the controller's working guard is the single owner of what has already been requested, so writing `last_backup_at` starts no backup. The Settings tile watches it only for its subtitle.
 - No `workmanager`. A background Flutter engine cannot share the Drift connection (`drift_flutter`'s `shareAcrossIsolates` does not work across engines), and iOS may stop a background task after about 30 s.
 
 ### Settings > Backup
@@ -1030,6 +1031,8 @@ Route `/settings/backup` (modal push, root navigator, like import and export), o
 Connecting shows backups made by other devices in the list; the app never deletes another device's backup.
 
 After a successful Connect or Reconnect, if the account's newest backup is restorable and newer than this device's last backup (on a device that has never backed up, only while it holds no transactions), the screen asks whether to restore it. The offer never appears at launch or on its own; restore still runs only from Settings.
+
+When automatic backup is on and this device's last backup is at least twice the period old, the Settings tile shows how long ago it was; when this device has no backup yet, the subtitle reads "This device has no backup yet."
 
 ### Architecture
 
@@ -1054,7 +1057,7 @@ In every case the device's previous backup is kept.
 
 - One Google Cloud project with the Drive API enabled.
 - OAuth consent screen: External, published as In production; in Testing, a user's grant expires after 7 days. The only scope is `drive.appdata`, which is non-sensitive, so the app needs no OAuth verification and has no 100-user cap.
-- Homepage `https://ledgerlylab.com` and a privacy-policy page on that site, both required for an external app in production. The privacy page doesn't exist yet. It must say the backup goes to the user's own Drive and the developer cannot read it. Verifying the domain in Google Search Console allows optional brand verification, so the consent screen shows Ledgerly's name and logo.
+- Homepage `https://ledgerlylab.com` and a privacy-policy page on that site, both required for an external app in production. The privacy page doesn't exist yet. It must say the backup goes to the user's own Drive, the developer cannot read it, and removing Ledgerly's access or uninstalling it does not delete the backups (with how to delete them). Verifying the domain in Google Search Console allows optional brand verification, so the consent screen shows Ledgerly's name and logo.
 - OAuth clients, each registered once. Releases need no new registration while the package name and the release keystore stay the same.
   - Android release: `com.example.ledgerly` plus the SHA-1 of the release keystore.
   - Web: its client ID is passed as `serverClientId`, which Android's Credential Manager requires.
@@ -1071,7 +1074,7 @@ Run each check before the code that depends on it:
 
 ### Tests
 
-- Repository round trip: back up, change data, restore; every table matches the backup, except that `device_id` and `backup_account_email` keep this device's values, `backup_frequency` keeps this device's value when it has one, and `last_backup_at` is the restore time.
+- Repository round trip: back up, change data, restore; every table matches the backup, except that `backup_account_email` keeps this device's value, `device_id` keeps it when the backup came from this device and is a new one otherwise, `backup_frequency` keeps this device's value when it has one, and `last_backup_at` is the restore time.
 - A backup whose `user_version` is above `schemaVersion` is rejected.
 - A staged `ledgerly.sqlite.restore` is applied at the next open, and a leftover `-journal` is deleted.
 - The new backup is uploaded and checked before the device's previous one is deleted, and another device's backup is never deleted.
